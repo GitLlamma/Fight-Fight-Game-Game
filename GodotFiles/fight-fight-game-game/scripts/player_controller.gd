@@ -10,7 +10,6 @@ class_name Player
 @export var attack_cooldown = 0.5
 
 var health: float
-var current_velocity = Vector2.ZERO
 var is_attacking = false
 var attack_timer = 0.0
 var player_number = 1
@@ -20,12 +19,11 @@ var facing_right = true
 @onready var attack_hitbox = $AttackHitbox
 
 var current_animation = "idle"
-var animation_timer = 0.0
 
 func _ready():
 	health = max_health
 	if attack_hitbox:
-		attack_hitbox.area_entered.connect(_on_attack_hitbox_entered)
+		attack_hitbox.body_entered.connect(_on_attack_hitbox_entered)
 	if not sprite:
 		sprite = $Sprite
 
@@ -35,21 +33,21 @@ func _physics_process(delta):
 	# Handle movement
 	var moving = false
 	if input["left"]:
-		current_velocity.x = -speed
+		velocity.x = -speed
 		moving = true
 		if player_number == 1 and facing_right:
 			facing_right = false
 		elif player_number == 2 and not facing_right:
 			facing_right = true
 	elif input["right"]:
-		current_velocity.x = speed
+		velocity.x = speed
 		moving = true
 		if player_number == 1 and not facing_right:
 			facing_right = true
 		elif player_number == 2 and facing_right:
 			facing_right = false
 	else:
-		current_velocity.x = 0
+		velocity.x = 0
 	
 	# Update animation state
 	if is_attacking:
@@ -61,11 +59,14 @@ func _physics_process(delta):
 	
 	# Handle jump
 	if input["jump"] and is_on_floor():
-		current_velocity.y = jump_force
+		velocity.y = jump_force
 		update_animation("jump")
 	
 	# Apply gravity
-	current_velocity.y += gravity * delta
+	if not is_on_floor():
+		velocity.y += gravity * delta
+	elif velocity.y > 0:
+		velocity.y = 0
 	
 	# Handle attack
 	if input["attack"] and attack_timer <= 0:
@@ -79,8 +80,11 @@ func _physics_process(delta):
 		sprite.scale.x = 1.0 if facing_right else -1.0
 	elif sprite and player_number == 2:
 		sprite.scale.x = -1.0 if facing_right else 1.0
+
+	# Mirror attack hitbox with visual facing so attack direction matches sprite.
+	if attack_hitbox and sprite:
+		attack_hitbox.scale.x = sprite.scale.x
 	
-	velocity = current_velocity
 	move_and_slide()
 
 func get_input() -> Dictionary:
@@ -121,7 +125,6 @@ func update_animation(anim_name: String):
 		return
 	
 	current_animation = anim_name
-	animation_timer = 0.0
 	
 	# Visual feedback for animations
 	if sprite:
@@ -136,9 +139,9 @@ func update_animation(anim_name: String):
 				sprite.color = Color(1.0, 0.6, 0.6)  # Slightly red tint
 				sprite.scale.y = 1.1  # Slight scaling for visual feedback
 
-func _on_attack_hitbox_entered(area):
-	if area is Player and area != self:
-		area.take_damage(attack_damage)
+func _on_attack_hitbox_entered(body):
+	if body is Player and body != self:
+		body.take_damage(attack_damage)
 
 func take_damage(damage: float):
 	health -= damage

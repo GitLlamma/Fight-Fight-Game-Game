@@ -7,6 +7,7 @@ signal health_changed(player_number: int, health: float)
 
 var player1: Player
 var player2: Player
+var game_over := false
 
 func _ready():
 	# Get player references from scene
@@ -19,13 +20,20 @@ func _ready():
 		player2.set_player_number(2)
 
 func _process(_delta):
+	if game_over:
+		return
+
 	# Check if either player has been defeated
-	if player1 and player1.health <= 0:
+	if is_instance_valid(player1) and player1.health <= 0:
 		on_player_defeated(1)
-	elif player2 and player2.health <= 0:
+	elif is_instance_valid(player2) and player2.health <= 0:
 		on_player_defeated(2)
 
 func on_player_defeated(player_number: int):
+	if game_over:
+		return
+
+	game_over = true
 	var winner = 3 - player_number  # If player 1 lost, player 2 won
 	player_won.emit(winner)
 	print("Player %d wins!" % winner)
