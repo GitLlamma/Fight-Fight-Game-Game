@@ -16,6 +16,7 @@ offset_left = -32.0
 offset_top = -64.0
 offset_right = 32.0
 offset_bottom = 0.0
+pivot_offset = Vector2(32, 32)
 color = Color(0.2, 0.6, 1, 1)
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]

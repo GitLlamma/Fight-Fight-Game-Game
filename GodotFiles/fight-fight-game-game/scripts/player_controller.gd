@@ -82,16 +82,16 @@ func _physics_process(delta):
 func get_input() -> Dictionary:
 	if player_number == 1:
 		return {
-			"left": Input.is_action_pressed("ui_left"),
-			"right": Input.is_action_pressed("ui_right"),
-			"jump": Input.is_action_just_pressed("ui_up"),
+			"left": Input.is_action_pressed("ui_left_p1"),
+			"right": Input.is_action_pressed("ui_right_p1"),
+			"jump": Input.is_action_just_pressed("ui_up_p1"),
 			"attack": Input.is_action_just_pressed("attack_p1")
 		}
 	else:
 		return {
-			"left": Input.is_action_pressed("ui_left_p2"),
-			"right": Input.is_action_pressed("ui_right_p2"),
-			"jump": Input.is_action_just_pressed("ui_up_p2"),
+			"left": Input.is_action_pressed("ui_left_p2") or Input.is_action_pressed("ui_left"),
+			"right": Input.is_action_pressed("ui_right_p2") or Input.is_action_pressed("ui_right"),
+			"jump": Input.is_action_just_pressed("ui_up_p2") or Input.is_action_just_pressed("ui_up"),
 			"attack": Input.is_action_just_pressed("attack_p2")
 		}
 
