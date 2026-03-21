@@ -127,8 +127,8 @@ These are optional but make working with the project significantly easier:
 "Cloning" downloads a full copy of the project from GitHub to your computer.
 
 1. Open a terminal:
-   - **Windows:** Open **Command Prompt**, or use the terminal inside VS Code (`Ctrl+`` ` ``)
-   - **Mac:** Open **Terminal** (`Cmd+Space` → type `Terminal`), or use the terminal inside VS Code (`Ctrl+`` ` ``)
+   - **Windows:** Open **Command Prompt**, or use the terminal inside VS Code (`Ctrl+\``)
+   - **Mac:** Open **Terminal** (`Cmd+Space` → type `Terminal`), or use the terminal inside VS Code (`Ctrl+\``)
 2. Navigate to the folder where you want to store the project. For example, to put it on your Desktop:
    - **Windows:**
      ```
