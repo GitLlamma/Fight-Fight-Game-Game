@@ -1,0 +1,64 @@
+name: Configure Branch Ruleset
+
+on:
+  push:
+    branches:
+      - 'copilot/configure-branch-ruleset-main'
+  workflow_dispatch:
+
+permissions:
+  administration: write
+
+jobs:
+  configure-ruleset:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create branch protection ruleset for main
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          EXISTING_ID=$(gh api "repos/${{ github.repository }}/rulesets" \
+            --jq '.[] | select(.name == "Protect main branch") | .id' 2>/dev/null || echo "")
+
+          if [ -z "$EXISTING_ID" ]; then
+            echo "Creating branch ruleset..."
+            cat > /tmp/ruleset.json << 'RULESET_EOF'
+          {
+            "name": "Protect main branch",
+            "target": "branch",
+            "enforcement": "active",
+            "conditions": {
+              "ref_name": {
+                "include": ["refs/heads/main"],
+                "exclude": []
+              }
+            },
+            "rules": [
+              {
+                "type": "pull_request",
+                "parameters": {
+                  "required_approving_review_count": 1,
+                  "dismiss_stale_reviews_on_push": false,
+                  "require_code_owner_review": false,
+                  "require_last_push_approval": false,
+                  "required_review_thread_resolution": false
+                }
+              },
+              {
+                "type": "required_status_checks",
+                "parameters": {
+                  "required_status_checks": [],
+                  "strict_required_status_checks_policy": true
+                }
+              }
+            ]
+          }
+          RULESET_EOF
+            gh api "repos/${{ github.repository }}/rulesets" \
+              --method POST \
+              --header "X-GitHub-Api-Version: 2022-11-28" \
+              --input /tmp/ruleset.json
+            echo "Branch ruleset created successfully!"
+          else
+            echo "Branch ruleset already exists (ID: $EXISTING_ID), skipping."
+          fi
