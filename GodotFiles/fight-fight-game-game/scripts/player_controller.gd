@@ -13,7 +13,7 @@ var health: float
 var is_attacking = false
 var attack_timer = 0.0
 var player_number = 1
-var facing_right = true
+var facing_dir := 1
 
 @onready var sprite = $Sprite
 @onready var attack_hitbox = $AttackHitbox
@@ -35,17 +35,11 @@ func _physics_process(delta):
 	if input["left"]:
 		velocity.x = -speed
 		moving = true
-		if player_number == 1 and facing_right:
-			facing_right = false
-		elif player_number == 2 and not facing_right:
-			facing_right = true
+		facing_dir = -1
 	elif input["right"]:
 		velocity.x = speed
 		moving = true
-		if player_number == 1 and not facing_right:
-			facing_right = true
-		elif player_number == 2 and facing_right:
-			facing_right = false
+		facing_dir = 1
 	else:
 		velocity.x = 0
 	
@@ -75,15 +69,13 @@ func _physics_process(delta):
 	
 	attack_timer -= delta
 	
-	# Flip sprite based on facing direction
-	if sprite and player_number == 1:
-		sprite.scale.x = 1.0 if facing_right else -1.0
-	elif sprite and player_number == 2:
-		sprite.scale.x = -1.0 if facing_right else 1.0
+	# Flip sprite based on one shared facing convention.
+	if sprite:
+		sprite.scale.x = float(facing_dir)
 
 	# Mirror attack hitbox with visual facing so attack direction matches sprite.
-	if attack_hitbox and sprite:
-		attack_hitbox.scale.x = sprite.scale.x
+	if attack_hitbox:
+		attack_hitbox.scale.x = float(facing_dir)
 	
 	move_and_slide()
 
@@ -158,6 +150,6 @@ func die():
 func set_player_number(num: int):
 	player_number = num
 	if num == 1:
-		facing_right = true
+		facing_dir = 1
 	else:
-		facing_right = false
+		facing_dir = -1
