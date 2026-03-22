@@ -20,6 +20,7 @@ pivot_offset = Vector2(32, 32)
 color = Color(0.2, 0.6, 1, 1)
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, -32)
 shape = SubResource("RectangleShape2D_1")
 
 [node name="AttackHitbox" type="Area2D" parent="."]
@@ -27,5 +28,5 @@ monitoring = false
 
 [node name="AttackCollision" type="CollisionShape2D" parent="AttackHitbox"]
 shape = SubResource("RectangleShape2D_2")
-position = Vector2(70, 0)
+position = Vector2(82, -32)
 
