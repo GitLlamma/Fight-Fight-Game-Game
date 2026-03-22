@@ -30,6 +30,14 @@ monitoring = false
 shape = SubResource("RectangleShape2D_2")
 position = Vector2(82, -32)
 
+[node name="AttackDebugFill" type="ColorRect" parent="AttackHitbox"]
+visible = false
+offset_left = 32.0
+offset_top = -64.0
+offset_right = 132.0
+offset_bottom = 0.0
+color = Color(1, 0, 0, 0.2)
+
 [node name="AttackDebugOutline" type="Line2D" parent="AttackHitbox"]
 visible = false
 points = PackedVector2Array(32, -64, 132, -64, 132, 0, 32, 0, 32, -64)

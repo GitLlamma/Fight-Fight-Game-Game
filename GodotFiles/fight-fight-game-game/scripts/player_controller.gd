@@ -11,15 +11,18 @@ signal defeated(player_number: int)
 @export var max_health = 100.0
 @export var attack_damage = 10.0
 @export var attack_cooldown = 0.5
+@export var damage_flash_duration = 0.12
 
 var health: float
 var is_attacking = false
 var attack_timer = 0.0
 var player_number = 1
 var facing_dir := 1
+var is_damage_flashing := false
 
 @onready var sprite = $Sprite
 @onready var attack_hitbox = $AttackHitbox
+@onready var attack_debug_fill = $AttackHitbox/AttackDebugFill
 @onready var attack_debug_outline = $AttackHitbox/AttackDebugOutline
 
 var current_animation = "idle"
@@ -28,6 +31,8 @@ func _ready():
 	health = max_health
 	if attack_hitbox:
 		attack_hitbox.body_entered.connect(_on_attack_hitbox_entered)
+	if attack_debug_fill:
+		attack_debug_fill.hide()
 	if attack_debug_outline:
 		attack_debug_outline.hide()
 	if not sprite:
@@ -108,6 +113,8 @@ func perform_attack():
 	# Activate hitbox briefly
 	if attack_hitbox:
 		attack_hitbox.monitoring = true
+	if attack_debug_fill:
+		attack_debug_fill.show()
 	if attack_debug_outline:
 		attack_debug_outline.show()
 	
@@ -115,6 +122,8 @@ func perform_attack():
 	is_attacking = false
 	if attack_hitbox:
 		attack_hitbox.monitoring = false
+	if attack_debug_fill:
+		attack_debug_fill.hide()
 	if attack_debug_outline:
 		attack_debug_outline.hide()
 	
@@ -127,9 +136,14 @@ func update_animation(anim_name: String):
 		return
 	
 	current_animation = anim_name
-	
-	# Visual feedback for animations
-	if sprite:
+	_apply_animation_visuals(anim_name)
+
+func _apply_animation_visuals(anim_name: String):
+	if not sprite:
+		return
+
+	# Keep the hurt flash color active for the full flash duration.
+	if not is_damage_flashing:
 		match anim_name:
 			"idle":
 				sprite.color = Color.WHITE
@@ -138,8 +152,12 @@ func update_animation(anim_name: String):
 			"jump":
 				sprite.color = Color(0.8, 1.0, 1.0)  # Slightly cyan tint
 			"attack":
-				sprite.color = Color(1.0, 0.6, 0.6)  # Slightly red tint
-				sprite.scale.y = 1.1  # Slight scaling for visual feedback
+				sprite.color = Color(1.0, 0.6, 0.6)  # Attack tint
+
+	if anim_name == "attack":
+		sprite.scale.y = 1.1  # Slight scaling for visual feedback
+	else:
+		sprite.scale.y = 1.0
 
 func _on_attack_hitbox_entered(body):
 	if body is Player and body != self:
@@ -150,10 +168,25 @@ func take_damage(damage: float):
 	health -= damage
 	health = max(0, health)
 	health_changed.emit(player_number, health, max_health)
+	_start_damage_flash()
 	
 	if health <= 0:
 		defeated.emit(player_number)
 		die()
+
+func _start_damage_flash():
+	if not sprite or is_queued_for_deletion():
+		return
+
+	is_damage_flashing = true
+	sprite.color = Color(0.8, 0.2, 0.2)  # Deeper red than attack tint.
+	await get_tree().create_timer(damage_flash_duration).timeout
+
+	if is_queued_for_deletion():
+		return
+
+	is_damage_flashing = false
+	_apply_animation_visuals(current_animation)
 
 func die():
 	print("Player %d defeated!" % player_number)
