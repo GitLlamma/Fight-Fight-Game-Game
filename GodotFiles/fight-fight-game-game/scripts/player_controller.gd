@@ -4,6 +4,20 @@ class_name Player
 
 signal health_changed(player_number: int, health: float, max_health: float)
 signal defeated(player_number: int)
+signal move_requested(player_number: int, move_id: StringName, grounded: bool, directional_intent: Vector2i)
+
+class InputIntent:
+	var move_axis: int = 0
+	var directional_intent: Vector2i = Vector2i.ZERO
+	var jump_pressed: bool = false
+	var jump_held: bool = false
+	var down_tap: bool = false
+	var attack_pressed: bool = false
+
+const DEFAULT_MOVE_EXECUTOR_SCRIPT: Script = preload("res://scripts/characters/default_move_executor.gd")
+const MOVE_DATA_SCRIPT: Script = preload("res://scripts/characters/move_data.gd")
+
+@export var character_profile: CharacterData
 
 @export var speed = 400.0
 @export var ground_acceleration = 3000.0
@@ -40,21 +54,24 @@ var health: float
 var is_attacking = false
 var attack_timer = 0.0
 var player_number = 1
-var facing_dir := 1
-var is_damage_flashing := false
-var jump_hold_timer := 0.0
-var jump_count := 0
-var double_jump_control_timer := 0.0
-var is_fast_falling := false
+var facing_dir = 1
+var is_damage_flashing = false
+var jump_hold_timer = 0.0
+var jump_count = 0
+var double_jump_control_timer = 0.0
+var is_fast_falling = false
 
 @onready var sprite = $Sprite
 @onready var attack_hitbox = $AttackHitbox
 @onready var attack_debug_fill = $AttackHitbox/AttackDebugFill
 @onready var attack_debug_outline = $AttackHitbox/AttackDebugOutline
+@onready var move_executor = $MoveExecutor
 
 var current_animation = "idle"
+var fallback_move_data
 
 func _ready():
+	_apply_character_profile()
 	health = max_health
 	if attack_hitbox:
 		attack_hitbox.body_entered.connect(_on_attack_hitbox_entered)
@@ -64,18 +81,52 @@ func _ready():
 		attack_debug_outline.hide()
 	if not sprite:
 		sprite = $Sprite
+	_ensure_move_executor()
+	fallback_move_data = _build_fallback_move_data()
+
+func _apply_character_profile():
+	if character_profile == null:
+		return
+
+	max_health = character_profile.max_health
+	speed = character_profile.speed
+	ground_acceleration = character_profile.ground_acceleration
+	ground_deceleration = character_profile.ground_deceleration
+	air_acceleration = character_profile.air_acceleration
+	air_deceleration = character_profile.air_deceleration
+	air_release_deceleration = character_profile.air_release_deceleration
+	air_reverse_acceleration = character_profile.air_reverse_acceleration
+	max_air_speed_factor = character_profile.max_air_speed_factor
+	max_air_reverse_speed_factor = character_profile.max_air_reverse_speed_factor
+	jump_force = character_profile.jump_force
+	max_jumps = character_profile.max_jumps
+	double_jump_force = character_profile.double_jump_force
+	double_jump_hold_factor = character_profile.double_jump_hold_factor
+	double_jump_control_time = character_profile.double_jump_control_time
+	double_jump_air_acceleration = character_profile.double_jump_air_acceleration
+	double_jump_air_reverse_acceleration = character_profile.double_jump_air_reverse_acceleration
+	double_jump_direction_speed_factor = character_profile.double_jump_direction_speed_factor
+	double_jump_burst_acceleration = character_profile.double_jump_burst_acceleration
+	double_jump_reverse_burst_acceleration = character_profile.double_jump_reverse_burst_acceleration
+	gravity = character_profile.gravity
+	max_fall_speed = character_profile.max_fall_speed
+	fast_fall_speed = character_profile.fast_fall_speed
+	fast_fall_gravity_multiplier = character_profile.fast_fall_gravity_multiplier
+	max_jump_hold_time = character_profile.max_jump_hold_time
+	held_jump_gravity_multiplier = character_profile.held_jump_gravity_multiplier
+	short_hop_velocity_multiplier = character_profile.short_hop_velocity_multiplier
+	attack_damage = character_profile.attack_damage * character_profile.strength_multiplier
+	attack_cooldown = character_profile.attack_cooldown
+	damage_flash_duration = character_profile.damage_flash_duration
 
 func _physics_process(delta):
-	var input = get_input()
+	var raw_input = get_input()
+	var input_intent = _build_input_intent(raw_input)
 
 	# Handle movement with momentum and limited air turning.
-	var input_dir: int = 0
-	if input["left"]:
-		input_dir -= 1
-	if input["right"]:
-		input_dir += 1
+	var input_dir: int = input_intent.move_axis
 
-	if input_dir != 0:
+	if input_dir != 0 and not is_attacking:
 		facing_dir = input_dir
 
 	if is_on_floor():
@@ -109,7 +160,7 @@ func _physics_process(delta):
 			var air_reverse_target_speed: float = float(input_dir) * speed * max_air_reverse_speed_factor
 			velocity.x = move_toward(velocity.x, air_reverse_target_speed, current_air_reverse_acceleration * delta)
 
-	var moving := absf(velocity.x) > 10.0
+	var moving: bool = absf(velocity.x) > 10.0
 	
 	# Update animation state
 	if not is_on_floor():
@@ -122,7 +173,7 @@ func _physics_process(delta):
 		update_animation("idle")
 	
 	# Handle jump
-	if input["jump"] and jump_count < max_jumps:
+	if input_intent.jump_pressed and jump_count < max_jumps:
 		is_fast_falling = false
 		if jump_count == 0:
 			velocity.y = jump_force
@@ -134,17 +185,17 @@ func _physics_process(delta):
 		update_animation("jump")
 	
 	# Fast-fall triggers only from a down tap while currently descending.
-	if not is_on_floor() and velocity.y > 0.0 and input["down_tap"]:
+	if not is_on_floor() and velocity.y > 0.0 and input_intent.down_tap:
 		is_fast_falling = true
 
 	# Apply gravity
 	if not is_on_floor():
 		# Releasing jump early creates a short hop.
-		if velocity.y < 0 and not input["jump_hold"] and jump_hold_timer > 0.0:
+		if velocity.y < 0 and not input_intent.jump_held and jump_hold_timer > 0.0:
 			velocity.y *= short_hop_velocity_multiplier
 			jump_hold_timer = 0.0
 
-		if velocity.y < 0 and input["jump_hold"] and jump_hold_timer > 0.0:
+		if velocity.y < 0 and input_intent.jump_held and jump_hold_timer > 0.0:
 			velocity.y += gravity * held_jump_gravity_multiplier * delta
 			jump_hold_timer -= delta
 		else:
@@ -158,9 +209,11 @@ func _physics_process(delta):
 		velocity.y = 0
 	
 	# Handle attack
-	if input["attack"] and attack_timer <= 0:
-		perform_attack()
-		attack_timer = attack_cooldown
+	if input_intent.attack_pressed and attack_timer <= 0:
+		var move_data = _resolve_move_data(input_intent)
+		move_requested.emit(player_number, move_data.move_id, is_on_floor(), input_intent.directional_intent)
+		move_executor.execute_move(self, move_data)
+		attack_timer = move_data.cooldown
 	
 	attack_timer -= delta
 	
@@ -179,8 +232,10 @@ func get_input() -> Dictionary:
 		return {
 			"left": Input.is_action_pressed("ui_left_p1"),
 			"right": Input.is_action_pressed("ui_right_p1"),
-			"jump": Input.is_action_just_pressed("ui_up_p1"),
-			"jump_hold": Input.is_action_pressed("ui_up_p1"),
+			"up_held": Input.is_action_pressed("ui_up_p1"),
+			"down_held": _is_action_pressed_safe("ui_down_p1") or Input.is_action_pressed("ui_down"),
+			"jump": _is_action_just_pressed_safe("jump_p1") or Input.is_action_just_pressed("ui_up_p1"),
+			"jump_hold": _is_action_pressed_safe("jump_p1") or Input.is_action_pressed("ui_up_p1"),
 			"down_tap": _is_action_just_pressed_safe("ui_down_p1") or Input.is_action_just_pressed("ui_down"),
 			"attack": Input.is_action_just_pressed("attack_p1")
 		}
@@ -188,14 +243,96 @@ func get_input() -> Dictionary:
 		return {
 			"left": Input.is_action_pressed("ui_left_p2") or Input.is_action_pressed("ui_left"),
 			"right": Input.is_action_pressed("ui_right_p2") or Input.is_action_pressed("ui_right"),
-			"jump": Input.is_action_just_pressed("ui_up_p2") or Input.is_action_just_pressed("ui_up"),
-			"jump_hold": Input.is_action_pressed("ui_up_p2") or Input.is_action_pressed("ui_up"),
+			"up_held": Input.is_action_pressed("ui_up_p2") or Input.is_action_pressed("ui_up"),
+			"down_held": _is_action_pressed_safe("ui_down_p2") or Input.is_action_pressed("ui_down"),
+			"jump": _is_action_just_pressed_safe("jump_p2") or Input.is_action_just_pressed("ui_up_p2") or Input.is_action_just_pressed("ui_up"),
+			"jump_hold": _is_action_pressed_safe("jump_p2") or Input.is_action_pressed("ui_up_p2") or Input.is_action_pressed("ui_up"),
 			"down_tap": _is_action_just_pressed_safe("ui_down_p2") or Input.is_action_just_pressed("ui_down"),
 			"attack": Input.is_action_just_pressed("attack_p2")
 		}
 
+func _build_input_intent(raw_input: Dictionary) -> InputIntent:
+	var intent = InputIntent.new()
+	var left_held: bool = bool(raw_input.get("left", false))
+	var right_held: bool = bool(raw_input.get("right", false))
+	var up_held: bool = bool(raw_input.get("up_held", false))
+	var down_held: bool = bool(raw_input.get("down_held", false))
+
+	intent.move_axis = _axis_from_directions(left_held, right_held)
+	intent.directional_intent = Vector2i(
+		intent.move_axis,
+		_axis_from_directions(up_held, down_held)
+	)
+	intent.jump_pressed = bool(raw_input.get("jump", false))
+	intent.jump_held = bool(raw_input.get("jump_hold", false))
+	intent.down_tap = bool(raw_input.get("down_tap", false))
+	intent.attack_pressed = bool(raw_input.get("attack", false))
+	return intent
+
+func _axis_from_directions(negative: bool, positive: bool) -> int:
+	if negative == positive:
+		return 0
+	return -1 if negative else 1
+
+func _ensure_move_executor():
+	if move_executor:
+		return
+
+	move_executor = DEFAULT_MOVE_EXECUTOR_SCRIPT.new()
+	move_executor.name = "MoveExecutor"
+	add_child(move_executor)
+
+func _build_fallback_move_data():
+	var move_data = MOVE_DATA_SCRIPT.new()
+	move_data.move_id = &"neutral"
+	move_data.display_name = "Fallback Neutral"
+	move_data.damage = attack_damage
+	move_data.cooldown = attack_cooldown
+	move_data.startup_frames = 4
+	move_data.active_frames = 3
+	move_data.endlag_frames = 12
+	return move_data
+
+func _resolve_move_data(input_intent: InputIntent):
+	var is_grounded: bool = is_on_floor()
+	var directional_move = _resolve_directional_move_slot(input_intent.directional_intent, is_grounded)
+	if directional_move != null:
+		return directional_move
+
+	if character_profile:
+		if is_grounded and character_profile.ground_neutral_move:
+			return character_profile.ground_neutral_move
+		if not is_grounded and character_profile.air_neutral_move:
+			return character_profile.air_neutral_move
+
+	# Keep using current attack tuning if no character move data is assigned yet.
+	fallback_move_data.damage = attack_damage
+	fallback_move_data.cooldown = attack_cooldown
+	return fallback_move_data
+
+func _resolve_directional_move_slot(directional_intent: Vector2i, is_grounded: bool):
+	if character_profile == null:
+		return null
+
+	# Vertical intent has priority over horizontal intent.
+	if directional_intent.y < 0:
+		return character_profile.ground_up_move if is_grounded else character_profile.air_up_move
+	if directional_intent.y > 0:
+		return character_profile.ground_down_move if is_grounded else character_profile.air_down_move
+
+	if directional_intent.x == 0:
+		return null
+
+	var is_forward: bool = directional_intent.x == facing_dir
+	if is_forward:
+		return character_profile.ground_forward_move if is_grounded else character_profile.air_forward_move
+	return character_profile.ground_back_move if is_grounded else character_profile.air_back_move
+
 func _is_action_just_pressed_safe(action_name: String) -> bool:
 	return InputMap.has_action(action_name) and Input.is_action_just_pressed(action_name)
+
+func _is_action_pressed_safe(action_name: String) -> bool:
+	return InputMap.has_action(action_name) and Input.is_action_pressed(action_name)
 
 func _perform_double_jump(input_dir: int):
 	velocity.y = double_jump_force
@@ -207,34 +344,28 @@ func _perform_double_jump(input_dir: int):
 		jump_dir = int(signf(velocity.x))
 
 	if jump_dir != 0:
-		facing_dir = jump_dir
+		if not is_attacking:
+			facing_dir = jump_dir
 		var target_speed: float = float(jump_dir) * speed * double_jump_direction_speed_factor
-		var turning_around := signf(velocity.x) != 0.0 and signf(velocity.x) != float(jump_dir)
+		var turning_around: bool = signf(velocity.x) != 0.0 and signf(velocity.x) != float(jump_dir)
 		var burst_acceleration: float = double_jump_reverse_burst_acceleration if turning_around else double_jump_burst_acceleration
 		velocity.x = move_toward(velocity.x, target_speed, burst_acceleration)
 
-func perform_attack():
+func begin_attack_state():
 	is_attacking = true
 	update_animation("attack")
-	
-	# Activate hitbox briefly
+
+func set_attack_hitbox_enabled(enabled: bool):
 	if attack_hitbox:
-		attack_hitbox.monitoring = true
+		attack_hitbox.monitoring = enabled
 	if attack_debug_fill:
-		attack_debug_fill.show()
+		attack_debug_fill.visible = enabled
 	if attack_debug_outline:
-		attack_debug_outline.show()
-	
-	await get_tree().create_timer(0.3).timeout
+		attack_debug_outline.visible = enabled
+
+func end_attack_state():
 	is_attacking = false
-	if attack_hitbox:
-		attack_hitbox.monitoring = false
-	if attack_debug_fill:
-		attack_debug_fill.hide()
-	if attack_debug_outline:
-		attack_debug_outline.hide()
-	
-	# Reset animation scale
+	set_attack_hitbox_enabled(false)
 	if sprite:
 		sprite.scale.y = 1.0
 
