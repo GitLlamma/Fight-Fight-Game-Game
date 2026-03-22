@@ -18,13 +18,16 @@ signal defeated(player_number: int)
 @export var max_jumps = 2
 @export var double_jump_force = -560.0
 @export var double_jump_hold_factor = 0.55
-@export var double_jump_control_time = 0.14
+@export var double_jump_control_time = 0.25
 @export var double_jump_air_acceleration = 1250.0
 @export var double_jump_air_reverse_acceleration = 1450.0
 @export var double_jump_direction_speed_factor = 0.9
 @export var double_jump_burst_acceleration = 220.0
 @export var double_jump_reverse_burst_acceleration = 360.0
 @export var gravity = 2000.0
+@export var max_fall_speed = 950.0
+@export var fast_fall_speed = 1450.0
+@export var fast_fall_gravity_multiplier = 1.5
 @export var max_jump_hold_time = 0.13
 @export var held_jump_gravity_multiplier = 0.31
 @export var short_hop_velocity_multiplier = 0.62
@@ -42,6 +45,7 @@ var is_damage_flashing := false
 var jump_hold_timer := 0.0
 var jump_count := 0
 var double_jump_control_timer := 0.0
+var is_fast_falling := false
 
 @onready var sprite = $Sprite
 @onready var attack_hitbox = $AttackHitbox
@@ -77,6 +81,7 @@ func _physics_process(delta):
 	if is_on_floor():
 		jump_count = 0
 		double_jump_control_timer = 0.0
+		is_fast_falling = false
 	elif double_jump_control_timer > 0.0:
 		double_jump_control_timer = max(double_jump_control_timer - delta, 0.0)
 
@@ -118,6 +123,7 @@ func _physics_process(delta):
 	
 	# Handle jump
 	if input["jump"] and jump_count < max_jumps:
+		is_fast_falling = false
 		if jump_count == 0:
 			velocity.y = jump_force
 			jump_hold_timer = max_jump_hold_time
@@ -127,6 +133,10 @@ func _physics_process(delta):
 		jump_count += 1
 		update_animation("jump")
 	
+	# Fast-fall triggers only from a down tap while currently descending.
+	if not is_on_floor() and velocity.y > 0.0 and input["down_tap"]:
+		is_fast_falling = true
+
 	# Apply gravity
 	if not is_on_floor():
 		# Releasing jump early creates a short hop.
@@ -138,8 +148,12 @@ func _physics_process(delta):
 			velocity.y += gravity * held_jump_gravity_multiplier * delta
 			jump_hold_timer -= delta
 		else:
-			velocity.y += gravity * delta
+			var fall_gravity_multiplier: float = fast_fall_gravity_multiplier if is_fast_falling else 1.0
+			velocity.y += gravity * fall_gravity_multiplier * delta
 			jump_hold_timer = 0.0
+
+		var current_max_fall_speed: float = fast_fall_speed if is_fast_falling else max_fall_speed
+		velocity.y = min(velocity.y, current_max_fall_speed)
 	elif velocity.y > 0:
 		velocity.y = 0
 	
@@ -167,6 +181,7 @@ func get_input() -> Dictionary:
 			"right": Input.is_action_pressed("ui_right_p1"),
 			"jump": Input.is_action_just_pressed("ui_up_p1"),
 			"jump_hold": Input.is_action_pressed("ui_up_p1"),
+			"down_tap": _is_action_just_pressed_safe("ui_down_p1") or Input.is_action_just_pressed("ui_down"),
 			"attack": Input.is_action_just_pressed("attack_p1")
 		}
 	else:
@@ -175,8 +190,12 @@ func get_input() -> Dictionary:
 			"right": Input.is_action_pressed("ui_right_p2") or Input.is_action_pressed("ui_right"),
 			"jump": Input.is_action_just_pressed("ui_up_p2") or Input.is_action_just_pressed("ui_up"),
 			"jump_hold": Input.is_action_pressed("ui_up_p2") or Input.is_action_pressed("ui_up"),
+			"down_tap": _is_action_just_pressed_safe("ui_down_p2") or Input.is_action_just_pressed("ui_down"),
 			"attack": Input.is_action_just_pressed("attack_p2")
 		}
+
+func _is_action_just_pressed_safe(action_name: String) -> bool:
+	return InputMap.has_action(action_name) and Input.is_action_just_pressed(action_name)
 
 func _perform_double_jump(input_dir: int):
 	velocity.y = double_jump_force
