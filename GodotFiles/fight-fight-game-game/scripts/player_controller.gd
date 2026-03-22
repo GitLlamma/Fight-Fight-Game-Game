@@ -20,6 +20,7 @@ var facing_dir := 1
 
 @onready var sprite = $Sprite
 @onready var attack_hitbox = $AttackHitbox
+@onready var attack_debug_outline = $AttackHitbox/AttackDebugOutline
 
 var current_animation = "idle"
 
@@ -27,6 +28,8 @@ func _ready():
 	health = max_health
 	if attack_hitbox:
 		attack_hitbox.body_entered.connect(_on_attack_hitbox_entered)
+	if attack_debug_outline:
+		attack_debug_outline.hide()
 	if not sprite:
 		sprite = $Sprite
 
@@ -105,11 +108,15 @@ func perform_attack():
 	# Activate hitbox briefly
 	if attack_hitbox:
 		attack_hitbox.monitoring = true
+	if attack_debug_outline:
+		attack_debug_outline.show()
 	
 	await get_tree().create_timer(0.3).timeout
 	is_attacking = false
 	if attack_hitbox:
 		attack_hitbox.monitoring = false
+	if attack_debug_outline:
+		attack_debug_outline.hide()
 	
 	# Reset animation scale
 	if sprite:

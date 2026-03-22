@@ -30,3 +30,9 @@ monitoring = false
 shape = SubResource("RectangleShape2D_2")
 position = Vector2(82, -32)
 
+[node name="AttackDebugOutline" type="Line2D" parent="AttackHitbox"]
+visible = false
+points = PackedVector2Array(32, -64, 132, -64, 132, 0, 32, 0, 32, -64)
+width = 2.0
+default_color = Color(1, 0, 0, 1)
+
