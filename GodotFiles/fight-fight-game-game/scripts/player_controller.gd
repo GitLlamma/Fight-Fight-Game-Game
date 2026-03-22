@@ -2,6 +2,9 @@ extends CharacterBody2D
 
 class_name Player
 
+signal health_changed(player_number: int, health: float, max_health: float)
+signal defeated(player_number: int)
+
 @export var speed = 300.0
 @export var jump_force = -400.0
 @export var gravity = 800.0
@@ -134,17 +137,19 @@ func update_animation(anim_name: String):
 func _on_attack_hitbox_entered(body):
 	if body is Player and body != self:
 		body.take_damage(attack_damage)
+		print("Player %d hit Player %d for %.1f damage!" % [player_number, body.player_number, attack_damage])
 
 func take_damage(damage: float):
 	health -= damage
 	health = max(0, health)
+	health_changed.emit(player_number, health, max_health)
 	
 	if health <= 0:
+		defeated.emit(player_number)
 		die()
 
 func die():
 	print("Player %d defeated!" % player_number)
-	# TODO: Emit signal to game manager
 	queue_free()
 
 func set_player_number(num: int):

@@ -16,5 +16,4 @@ func update_health(player_number: int, health: float, max_health: float):
 
 func show_winner(player_number: int):
 	win_screen.show()
-	# TODO: Display winner text
-	print("Player %d wins!" % player_number)
+	$WinScreen/WinLabel.text = "Player %d Wins!" % player_number
