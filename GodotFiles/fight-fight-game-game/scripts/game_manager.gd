@@ -67,7 +67,7 @@ func _get_available_character_options() -> Array:
 	characters_dir.list_dir_begin()
 	var entry_name: String = characters_dir.get_next()
 	while entry_name != "":
-		if not characters_dir.current_is_dir() and (entry_name.ends_with(".tres") or entry_name.ends_with(".res")):
+		if not characters_dir.current_is_dir() and entry_name.ends_with(".tres"):
 			var resource_path := "res://characters/%s" % entry_name
 			var profile := load(resource_path) as CharacterData
 			if profile:
@@ -133,9 +133,10 @@ func _spawn_player(player_number: int, node_name: String, spawn_marker: Node2D, 
 	if character_profile:
 		player_instance.character_profile = character_profile
 
+	var arena: Node2D = get_node("Arena")
 	player_instance.name = node_name
-	player_instance.position = spawn_marker.position
-	get_node("Arena").add_child(player_instance)
+	arena.add_child(player_instance)
+	player_instance.global_position = spawn_marker.global_position
 	player_instance.set_player_number(player_number)
 	player_instance.health_changed.connect(_on_player_health_changed)
 	player_instance.defeated.connect(on_player_defeated)
@@ -157,7 +158,11 @@ func _load_character_profile(character_id: StringName) -> CharacterData:
 func _despawn_player(player):
 	if player == null or not is_instance_valid(player):
 		return
-	player.free()
+	if player.health_changed.is_connected(_on_player_health_changed):
+		player.health_changed.disconnect(_on_player_health_changed)
+	if player.defeated.is_connected(on_player_defeated):
+		player.defeated.disconnect(on_player_defeated)
+	player.queue_free()
 
 func _process(_delta):
 	if game_over:

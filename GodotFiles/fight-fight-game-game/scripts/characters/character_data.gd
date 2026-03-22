@@ -47,15 +47,15 @@ class_name CharacterData
 @export var damage_flash_duration: float = 0.12
 
 # Directional move slots (ground)
-@export var ground_neutral_move: Resource
-@export var ground_up_move: Resource
-@export var ground_down_move: Resource
-@export var ground_forward_move: Resource
-@export var ground_back_move: Resource
+@export var ground_neutral_move: MoveData
+@export var ground_up_move: MoveData
+@export var ground_down_move: MoveData
+@export var ground_forward_move: MoveData
+@export var ground_back_move: MoveData
 
 # Directional move slots (air)
-@export var air_neutral_move: Resource
-@export var air_up_move: Resource
-@export var air_down_move: Resource
-@export var air_forward_move: Resource
-@export var air_back_move: Resource
+@export var air_neutral_move: MoveData
+@export var air_up_move: MoveData
+@export var air_down_move: MoveData
+@export var air_forward_move: MoveData
+@export var air_back_move: MoveData

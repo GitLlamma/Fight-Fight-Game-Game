@@ -53,6 +53,7 @@ const MOVE_DATA_SCRIPT: Script = preload("res://scripts/characters/move_data.gd"
 var health: float
 var is_attacking = false
 var attack_timer = 0.0
+var current_move_damage = 0.0
 var player_number = 1
 var facing_dir = 1
 var is_damage_flashing = false
@@ -209,13 +210,14 @@ func _physics_process(delta):
 		velocity.y = 0
 	
 	# Handle attack
-	if input_intent.attack_pressed and attack_timer <= 0:
-		var move_data = _resolve_move_data(input_intent)
+	if input_intent.attack_pressed and attack_timer <= 0.0 and not is_attacking:
+		var move_data: MoveData = _resolve_move_data(input_intent)
 		move_requested.emit(player_number, move_data.move_id, is_on_floor(), input_intent.directional_intent)
+		current_move_damage = move_data.damage
 		move_executor.execute_move(self, move_data)
 		attack_timer = move_data.cooldown
 	
-	attack_timer -= delta
+	attack_timer = max(attack_timer - delta, 0.0)
 	
 	# Flip sprite based on one shared facing convention.
 	if sprite:
@@ -282,8 +284,8 @@ func _ensure_move_executor():
 	move_executor.name = "MoveExecutor"
 	add_child(move_executor)
 
-func _build_fallback_move_data():
-	var move_data = MOVE_DATA_SCRIPT.new()
+func _build_fallback_move_data() -> MoveData:
+	var move_data: MoveData = MOVE_DATA_SCRIPT.new()
 	move_data.move_id = &"neutral"
 	move_data.display_name = "Fallback Neutral"
 	move_data.damage = attack_damage
@@ -293,9 +295,9 @@ func _build_fallback_move_data():
 	move_data.endlag_frames = 12
 	return move_data
 
-func _resolve_move_data(input_intent: InputIntent):
+func _resolve_move_data(input_intent: InputIntent) -> MoveData:
 	var is_grounded: bool = is_on_floor()
-	var directional_move = _resolve_directional_move_slot(input_intent.directional_intent, is_grounded)
+	var directional_move: MoveData = _resolve_directional_move_slot(input_intent.directional_intent, is_grounded)
 	if directional_move != null:
 		return directional_move
 
@@ -310,7 +312,7 @@ func _resolve_move_data(input_intent: InputIntent):
 	fallback_move_data.cooldown = attack_cooldown
 	return fallback_move_data
 
-func _resolve_directional_move_slot(directional_intent: Vector2i, is_grounded: bool):
+func _resolve_directional_move_slot(directional_intent: Vector2i, is_grounded: bool) -> MoveData:
 	if character_profile == null:
 		return null
 
@@ -365,6 +367,7 @@ func set_attack_hitbox_enabled(enabled: bool):
 
 func end_attack_state():
 	is_attacking = false
+	current_move_damage = 0.0
 	set_attack_hitbox_enabled(false)
 	if sprite:
 		sprite.scale.y = 1.0
@@ -399,8 +402,9 @@ func _apply_animation_visuals(anim_name: String):
 
 func _on_attack_hitbox_entered(body):
 	if body is Player and body != self:
-		body.take_damage(attack_damage)
-		print("Player %d hit Player %d for %.1f damage!" % [player_number, body.player_number, attack_damage])
+		var applied_damage: float = current_move_damage if current_move_damage > 0.0 else attack_damage
+		body.take_damage(applied_damage)
+		print("Player %d hit Player %d for %.1f damage!" % [player_number, body.player_number, applied_damage])
 
 func take_damage(damage: float):
 	health -= damage
