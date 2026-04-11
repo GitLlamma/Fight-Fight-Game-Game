@@ -22,6 +22,7 @@ signal character_select_requested()
 @onready var p1_lock_label = $CharacterSelectScreen/SelectContent/LockStatusRow/P1LockPanel/P1LockLabel
 @onready var p2_lock_panel = $CharacterSelectScreen/SelectContent/LockStatusRow/P2LockPanel
 @onready var p2_lock_label = $CharacterSelectScreen/SelectContent/LockStatusRow/P2LockPanel/P2LockLabel
+@onready var character_select_hint_label = $CharacterSelectScreen/SelectContent/HintLabel
 @onready var mouse_owner_p1_button = $CharacterSelectScreen/SelectContent/MouseOwnerRow/MouseOwnerP1Button
 @onready var mouse_owner_p2_button = $CharacterSelectScreen/SelectContent/MouseOwnerRow/MouseOwnerP2Button
 @onready var character_grid = $CharacterSelectScreen/SelectContent/CharacterGrid
@@ -115,6 +116,8 @@ const CHARACTER_TILE_IDLE_COLOR := Color(0.72, 0.72, 0.72, 1.0)
 const PLAYER_LOCK_PANEL_IDLE_COLOR := Color(0.3, 0.3, 0.3, 1.0)
 const PLAYER_LOCK_PANEL_IDLE_BORDER_COLOR := Color(0.55, 0.55, 0.55, 1.0)
 const PLAYER_LOCK_PANEL_TEXT_COLOR := Color(0.98, 0.98, 0.98, 1.0)
+const CHARACTER_SELECT_HINT_DEFAULT := "CHOOSE YOUR CHARACTER"
+const CHARACTER_SELECT_HINT_READY := "PRESS START/ENTER"
 const MAIN_MENU_TARGET_START: StringName = &"start"
 const MAIN_MENU_TARGET_CONTROLS: StringName = &"controls"
 const REQUIRED_REBIND_ACTIONS: Array[StringName] = [
@@ -411,6 +414,7 @@ func _get_selected_character_id(option_button: OptionButton) -> StringName:
 	return character_ids_by_index[selected_index]
 
 func _refresh_character_previews() -> void:
+	_refresh_character_select_hint_label()
 	_refresh_lock_status_panels()
 	_refresh_character_grid_visuals()
 
@@ -474,13 +478,17 @@ func _on_character_grid_tile_pressed(character_id: StringName) -> void:
 		return
 
 	if mouse_owner_player_number == 2:
+		_set_character_select_player_active(2, true)
 		_set_character_select_cursor_index(2, cursor_index)
+		_set_character_select_player_selected(2, true)
 		_set_character_select_locked(2, false)
 		_select_character_option(p2_character_option, character_id)
 		_on_character_option_changed(p2_character_option.selected)
 		return
 
+	_set_character_select_player_active(1, true)
 	_set_character_select_cursor_index(1, cursor_index)
+	_set_character_select_player_selected(1, true)
 	_set_character_select_locked(1, false)
 	_select_character_option(p1_character_option, character_id)
 	_on_character_option_changed(p1_character_option.selected)
@@ -501,6 +509,7 @@ func _reset_character_select_player_state() -> void:
 		character_select_player_state[player_number] = {
 			"active": false,
 			"locked": false,
+			"selected": false,
 			"cursor_index": _get_selected_index_for_player(player_number),
 			"device_id": -1,
 		}
@@ -640,6 +649,7 @@ func _get_or_join_character_select_player_for_device(device_id: int) -> int:
 			continue
 		state["active"] = true
 		state["locked"] = false
+		state["selected"] = false
 		state["device_id"] = device_id
 		character_select_player_state[player_number] = state
 		character_select_device_to_player[device_id] = player_number
@@ -673,6 +683,20 @@ func _set_character_select_locked(player_number: int, locked: bool) -> void:
 	if state.is_empty():
 		return
 	state["locked"] = locked
+	character_select_player_state[player_number] = state
+
+func _set_character_select_player_selected(player_number: int, selected: bool) -> void:
+	var state: Dictionary = character_select_player_state.get(player_number, {})
+	if state.is_empty():
+		return
+	state["selected"] = selected
+	character_select_player_state[player_number] = state
+
+func _set_character_select_player_active(player_number: int, active: bool) -> void:
+	var state: Dictionary = character_select_player_state.get(player_number, {})
+	if state.is_empty():
+		return
+	state["active"] = active
 	character_select_player_state[player_number] = state
 
 func _move_character_select_cursor(player_number: int, move_x: int, move_y: int) -> void:
@@ -723,6 +747,7 @@ func _lock_character_select_choice(player_number: int) -> void:
 		_select_character_option(p1_character_option, character_id)
 
 	state["locked"] = true
+	state["selected"] = true
 	character_select_player_state[player_number] = state
 	_refresh_character_previews()
 
@@ -734,6 +759,7 @@ func _unlock_character_select_choice(player_number: int) -> void:
 		return
 
 	state["locked"] = false
+	state["selected"] = false
 	character_select_player_state[player_number] = state
 	_refresh_character_previews()
 
@@ -859,14 +885,32 @@ func _can_keyboard_shortcut_start_match() -> bool:
 func _has_valid_character_selection_for_players() -> bool:
 	if character_ids_by_index.is_empty():
 		return false
+	if not _is_character_player_active(1) or not _is_character_player_active(2):
+		return false
+	if not _is_character_player_selected(1) or not _is_character_player_selected(2):
+		return false
 
 	var p1_character: StringName = _get_selected_character_id(p1_character_option)
 	var p2_character: StringName = _get_selected_character_id(p2_character_option)
 	return p1_character != &"" and p2_character != &""
 
+func _refresh_character_select_hint_label() -> void:
+	if character_select_hint_label == null:
+		return
+
+	if _can_controller_shortcut_start_match() or _can_keyboard_shortcut_start_match():
+		character_select_hint_label.text = CHARACTER_SELECT_HINT_READY
+		return
+
+	character_select_hint_label.text = CHARACTER_SELECT_HINT_DEFAULT
+
 func _get_character_player_cursor_index(player_number: int) -> int:
 	var state: Dictionary = character_select_player_state.get(player_number, {})
 	return int(state.get("cursor_index", -1))
+
+func _is_character_player_selected(player_number: int) -> bool:
+	var state: Dictionary = character_select_player_state.get(player_number, {})
+	return bool(state.get("selected", false))
 
 func _on_character_option_changed(_index: int) -> void:
 	_refresh_character_previews()
@@ -1264,6 +1308,7 @@ func _remove_character_select_device_assignment(device_id: int) -> void:
 		return
 	state["active"] = false
 	state["locked"] = false
+	state["selected"] = false
 	state["device_id"] = -1
 	character_select_player_state[player_number] = state
 	_refresh_character_previews()
@@ -1271,6 +1316,7 @@ func _remove_character_select_device_assignment(device_id: int) -> void:
 func _refresh_start_match_availability() -> void:
 	if character_select_start_warning_label == null:
 		return
+	_refresh_character_select_hint_label()
 
 	var controller_assignment_error: String = _get_match_start_controller_assignment_error()
 	var can_start: bool = controller_assignment_error.is_empty()

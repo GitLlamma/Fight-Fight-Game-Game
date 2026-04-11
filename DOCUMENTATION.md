@@ -173,6 +173,10 @@ Responsibilities:
 - lock panel color contrast is enforced with explicit panel stylebox backgrounds/borders (not just modulation tint), improving visibility across theme variations
 - lock panels display the currently hovered fighter name for active players, and play a slight pulse animation when lock-in happens
 - when a player locks in a fighter, that player's cursor highlight is removed from the grid; pressing B restores the cursor at their previously selected fighter
+- Character Select layout was compacted after stat/status removals: core rows are centered and the character grid now claims the main vertical space to avoid large empty gaps
+- Match Setup (Character Select) now uses a responsive 90% viewport panel layout
+- join/lock status panels use a tall portrait-style ratio (~3:2 height-to-width), with player text bottom-centered for future fighter portrait visuals
+- Character Select hint text updates dynamically: it shows "CHOOSE YOUR CHARACTER" by default and switches to "PRESS START/ENTER" only after both players have explicitly selected fighters
 - when a controller joins Character Select, the first button press only wakes/assigns that selector and does not perform movement or lock actions
 - joystick motion past deadzone can also wake/assign a controller selector, and that wake motion does not perform cursor movement
 - newly awakened selectors start hovering on Default Fighter in an unlocked state, and idle tiles are visually dimmed to avoid implying pre-selection
