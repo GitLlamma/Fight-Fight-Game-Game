@@ -180,6 +180,7 @@ Responsibilities:
 - attack input and move resolution
 - hit detection and damage
 - animation state and visual feedback
+- prevents inherited platform-velocity boosts when fighters stack on top of each other
 
 #### scripts/hud.gd
 Controls the HUD and temporary menu flow.

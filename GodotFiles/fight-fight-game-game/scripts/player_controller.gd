@@ -72,6 +72,9 @@ var current_animation = "idle"
 var fallback_move_data
 
 func _ready():
+	# Prevent stacking on another moving fighter from inheriting platform velocity.
+	# This keeps horizontal motion relative to world movement, not other players.
+	platform_floor_layers = 0
 	_apply_character_profile()
 	health = max_health
 	if attack_hitbox:
