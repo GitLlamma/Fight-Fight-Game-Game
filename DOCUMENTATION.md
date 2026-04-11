@@ -171,6 +171,9 @@ Responsibilities:
 - newly awakened selectors start hovering on Default Fighter in an unlocked state, and idle tiles are visually dimmed to avoid implying pre-selection
 - Mouse Controls owner toggles are mouse-only (not controller-focusable)
 - in Character Select, controller input is isolated to fighter cursor/lock logic and does not drive generic UI focus navigation
+- in Character Select, either active controller can press Start to begin the match once all player slots are active and locked
+- Start Match button is hidden in Character Select; keyboard/mouse flow starts match with Enter once both players have valid character selections
+- in Character Select, B is contextual: if the player is locked it unlocks, otherwise it navigates back to Main Menu
 - controls tab titles are set in script from translation keys to support future localization
 - full-screen placeholder background shown behind the controls screen
 - per-player segmented switch (Keyboard or Controller) with active/inactive visual state

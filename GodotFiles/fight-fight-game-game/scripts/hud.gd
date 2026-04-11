@@ -185,10 +185,16 @@ func _input(event: InputEvent) -> void:
 			if _handle_character_select_controller_button(event as InputEventJoypadButton):
 				get_viewport().set_input_as_handled()
 				return
+			# Never allow joypad buttons to fall through to generic UI focus navigation in Character Select.
+			get_viewport().set_input_as_handled()
+			return
 		elif event is InputEventJoypadMotion:
 			if _handle_character_select_controller_motion(event as InputEventJoypadMotion):
 				get_viewport().set_input_as_handled()
 				return
+			# Consume non-actionable motion to keep focus from leaving the grid area.
+			get_viewport().set_input_as_handled()
+			return
 
 	if pending_rebind_action == &"":
 		return
@@ -237,6 +243,13 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if not _is_menu_navigation_active():
 		return
+	if character_select_screen.visible and event is InputEventKey:
+		var key_event := event as InputEventKey
+		if key_event.pressed and not key_event.echo and (key_event.keycode == KEY_ENTER or key_event.keycode == KEY_KP_ENTER):
+			if _can_keyboard_shortcut_start_match():
+				_on_start_match_button_pressed()
+			get_viewport().set_input_as_handled()
+			return
 	if character_select_screen.visible and (event is InputEventJoypadButton or event is InputEventJoypadMotion):
 		# Character Select controller input is handled exclusively in _input.
 		return
@@ -552,7 +565,14 @@ func _handle_character_select_controller_button(button_event: InputEventJoypadBu
 			_lock_character_select_choice(player_number)
 			return true
 		JOY_BUTTON_B:
-			_unlock_character_select_choice(player_number)
+			if _is_character_player_locked(player_number):
+				_unlock_character_select_choice(player_number)
+			else:
+				_on_back_to_main_menu_button_pressed()
+			return true
+		JOY_BUTTON_START:
+			if _can_controller_shortcut_start_match():
+				_on_start_match_button_pressed()
 			return true
 
 	return true
@@ -777,6 +797,27 @@ func _is_character_player_active(player_number: int) -> bool:
 func _is_character_player_locked(player_number: int) -> bool:
 	var state: Dictionary = character_select_player_state.get(player_number, {})
 	return bool(state.get("locked", false))
+
+func _can_controller_shortcut_start_match() -> bool:
+	for player_number in PLAYER_SLOT_IDS:
+		if not _is_character_player_active(player_number):
+			return false
+		if not _is_character_player_locked(player_number):
+			return false
+	return _is_controller_assignment_valid_for_match_start()
+
+func _can_keyboard_shortcut_start_match() -> bool:
+	if not _has_valid_character_selection_for_players():
+		return false
+	return _is_controller_assignment_valid_for_match_start()
+
+func _has_valid_character_selection_for_players() -> bool:
+	if character_ids_by_index.is_empty():
+		return false
+
+	var p1_character: StringName = _get_selected_character_id(p1_character_option)
+	var p2_character: StringName = _get_selected_character_id(p2_character_option)
+	return p1_character != &"" and p2_character != &""
 
 func _get_character_player_cursor_index(player_number: int) -> int:
 	var state: Dictionary = character_select_player_state.get(player_number, {})
@@ -1348,8 +1389,6 @@ func _focus_default_for_visible_menu() -> void:
 		_focus_default_controls_menu_item()
 		return
 	if character_select_screen.visible:
-		if get_viewport().gui_get_focus_owner() == null:
-			back_to_main_menu_button.grab_focus()
 		return
 	if win_screen.visible:
 		if get_viewport().gui_get_focus_owner() == null:
