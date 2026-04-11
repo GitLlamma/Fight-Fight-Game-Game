@@ -25,11 +25,12 @@ signal character_select_requested()
 @onready var back_to_main_menu_button = $CharacterSelectScreen/SelectScroll/SelectContent/BackToMainMenuButton
 @onready var controls_background = $ControlsBackground
 @onready var controls_screen = $ControlsScreen
-@onready var controls_back_button = $ControlsScreen/ControlsScroll/ControlsContent/BackButton
-@onready var p1_keyboard_input_button = $ControlsScreen/ControlsScroll/ControlsContent/P1InputModeRow/P1InputModeSwitch/KeyboardButton
-@onready var p1_controller_input_button = $ControlsScreen/ControlsScroll/ControlsContent/P1InputModeRow/P1InputModeSwitch/ControllerButton
-@onready var p2_keyboard_input_button = $ControlsScreen/ControlsScroll/ControlsContent/P2InputModeRow/P2InputModeSwitch/KeyboardButton
-@onready var p2_controller_input_button = $ControlsScreen/ControlsScroll/ControlsContent/P2InputModeRow/P2InputModeSwitch/ControllerButton
+@onready var controls_player_tabs = $ControlsScreen/ControlsContent/PlayerTabs
+@onready var controls_back_button = $ControlsScreen/ControlsContent/BackButton
+@onready var p1_keyboard_input_button = $ControlsScreen/ControlsContent/PlayerTabs/Player1Tab/P1InputModeRow/P1InputModeSwitch/KeyboardButton
+@onready var p1_controller_input_button = $ControlsScreen/ControlsContent/PlayerTabs/Player1Tab/P1InputModeRow/P1InputModeSwitch/ControllerButton
+@onready var p2_keyboard_input_button = $ControlsScreen/ControlsContent/PlayerTabs/Player2Tab/P2InputModeRow/P2InputModeSwitch/KeyboardButton
+@onready var p2_controller_input_button = $ControlsScreen/ControlsContent/PlayerTabs/Player2Tab/P2InputModeRow/P2InputModeSwitch/ControllerButton
 
 var character_ids_by_index: Array[StringName] = []
 var character_options_by_id := {}
@@ -38,6 +39,9 @@ var cached_default_p1: StringName = &"default_fighter"
 var cached_default_p2: StringName = &"default_fighter"
 var p1_uses_controller := false
 var p2_uses_controller := false
+
+const CONTROLS_TAB_TITLE_P1_KEY := "UI_TAB_PLAYER_1"
+const CONTROLS_TAB_TITLE_P2_KEY := "UI_TAB_PLAYER_2"
 
 func _ready():
 	main_menu_background.hide()
@@ -60,7 +64,12 @@ func _ready():
 	p2_controller_input_button.pressed.connect(_on_p2_controller_input_button_pressed)
 	p1_character_option.item_selected.connect(_on_character_option_changed)
 	p2_character_option.item_selected.connect(_on_character_option_changed)
+	_refresh_controls_tab_titles()
 	_refresh_input_mode_switch_visuals()
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_TRANSLATION_CHANGED and is_node_ready():
+		_refresh_controls_tab_titles()
 
 func update_health(player_number: int, health: float, max_health: float):
 	var health_text := "%.0f / %.0f" % [health, max_health]
@@ -93,6 +102,7 @@ func hide_main_menu() -> void:
 func show_controls_screen() -> void:
 	controls_background.show()
 	controls_screen.show()
+	controls_player_tabs.current_tab = 0
 	main_menu_background.hide()
 	main_menu_screen.hide()
 	character_select_background.hide()
@@ -219,6 +229,14 @@ func _refresh_input_mode_switch_visuals() -> void:
 	_set_switch_button_visual(p1_controller_input_button, p1_uses_controller)
 	_set_switch_button_visual(p2_keyboard_input_button, not p2_uses_controller)
 	_set_switch_button_visual(p2_controller_input_button, p2_uses_controller)
+
+func _refresh_controls_tab_titles() -> void:
+	if controls_player_tabs == null or not is_instance_valid(controls_player_tabs):
+		return
+	if controls_player_tabs.get_tab_count() < 2:
+		return
+	controls_player_tabs.set_tab_title(0, tr(CONTROLS_TAB_TITLE_P1_KEY))
+	controls_player_tabs.set_tab_title(1, tr(CONTROLS_TAB_TITLE_P2_KEY))
 
 func _set_switch_button_visual(button: Button, active: bool) -> void:
 	button.button_pressed = active

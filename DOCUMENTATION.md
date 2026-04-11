@@ -130,7 +130,8 @@ Responsibilities:
 - rematch and return-to-select buttons
 - character select interface with Start and Back navigation
 - full-screen placeholder background shown behind the character select screen
-- controls setup UI screen (layout only, remapping logic pending)
+- controls setup UI screen with separate Player 1 and Player 2 tabs (layout only, remapping logic pending)
+- controls tab titles are set in script from translation keys to support future localization
 - full-screen placeholder background shown behind the controls screen
 - placeholder per-player segmented switch (Keyboard or Controller) with active/inactive visual state and no gameplay wiring yet
 
