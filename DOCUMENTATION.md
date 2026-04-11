@@ -160,11 +160,13 @@ Responsibilities:
 - Character Select now uses an icon-grid scaffold instead of visible dropdowns; the old OptionButton data path remains internally for temporary compatibility during migration
 - mouse ownership is explicit in Character Select via P1/P2 owner toggle buttons; mouse clicks on grid tiles assign to the selected owner
 - in Character Select, controllers join per player slot by pressing any button on an inactive controller (currently supports 2 slots, architecture is map-based for future expansion)
-- each active controller gets an independent wrapped cursor on the grid; D-pad/left stick move the cursor, A locks selection, B unlocks selection
+- each active controller gets an independent non-wrapping cursor on the grid; D-pad/left stick move the cursor within bounds, A locks selection, B unlocks selection
 - grid tiles visually show per-player cursor/lock state using color and label markers ([P1], [P2], [P1 LOCK], [P2 LOCK])
 - when a controller joins Character Select, the first button press only wakes/assigns that selector and does not perform movement or lock actions
 - joystick motion past deadzone can also wake/assign a controller selector, and that wake motion does not perform cursor movement
 - newly awakened selectors start hovering on Default Fighter in an unlocked state, and idle tiles are visually dimmed to avoid implying pre-selection
+- Mouse Controls owner toggles are mouse-only (not controller-focusable)
+- in Character Select, controller input is isolated to fighter cursor/lock logic and does not drive generic UI focus navigation
 - controls tab titles are set in script from translation keys to support future localization
 - full-screen placeholder background shown behind the controls screen
 - per-player segmented switch (Keyboard or Controller) with active/inactive visual state

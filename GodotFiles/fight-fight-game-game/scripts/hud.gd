@@ -154,6 +154,8 @@ func _ready():
 	main_menu_start_button.focus_exited.connect(_refresh_main_menu_button_selection_visuals)
 	main_menu_controls_button.focus_entered.connect(_on_main_menu_controls_focus_entered)
 	main_menu_controls_button.focus_exited.connect(_refresh_main_menu_button_selection_visuals)
+	mouse_owner_p1_button.focus_mode = Control.FOCUS_NONE
+	mouse_owner_p2_button.focus_mode = Control.FOCUS_NONE
 	_initialize_control_binding_buttons()
 	_load_input_modes_from_match_setup()
 	_validate_required_rebind_actions()
@@ -229,6 +231,9 @@ func _unhandled_input(event: InputEvent) -> void:
 	if pending_rebind_action != &"":
 		return
 	if not _is_menu_navigation_active():
+		return
+	if character_select_screen.visible and (event is InputEventJoypadButton or event is InputEventJoypadMotion):
+		# Character Select controller input is handled exclusively in _input.
 		return
 
 	if event is InputEventJoypadButton:
@@ -621,10 +626,8 @@ func _set_character_select_cursor_index(player_number: int, cursor_index: int) -
 	if state.is_empty():
 		return
 
-	var wrapped_index := cursor_index % character_ids_by_index.size()
-	if wrapped_index < 0:
-		wrapped_index += character_ids_by_index.size()
-	state["cursor_index"] = wrapped_index
+	var clamped_index := clampi(cursor_index, 0, character_ids_by_index.size() - 1)
+	state["cursor_index"] = clamped_index
 	character_select_player_state[player_number] = state
 	_refresh_character_grid_visuals()
 
@@ -643,15 +646,23 @@ func _move_character_select_cursor(player_number: int, move_x: int, move_y: int)
 	if state.is_empty() or bool(state.get("locked", false)):
 		return
 
+	var total_items: int = character_ids_by_index.size()
 	var current_index: int = int(state.get("cursor_index", 0))
+	current_index = clampi(current_index, 0, total_items - 1)
+
 	var columns: int = max(character_grid.columns, 1)
-	var delta := move_x
-	if move_y != 0:
-		delta = move_y * columns
-	var next_index := (current_index + delta) % character_ids_by_index.size()
-	if next_index < 0:
-		next_index += character_ids_by_index.size()
-	state["cursor_index"] = next_index
+	var total_rows: int = int(ceili(float(total_items) / float(columns)))
+	var current_row: int = current_index / columns
+	var current_col: int = current_index % columns
+
+	var target_row: int = clampi(current_row + move_y, 0, max(total_rows - 1, 0))
+	var target_col: int = clampi(current_col + move_x, 0, columns - 1)
+
+	var row_start: int = target_row * columns
+	var row_end: int = min(row_start + columns - 1, total_items - 1)
+	var target_index: int = clampi(row_start + target_col, row_start, row_end)
+
+	state["cursor_index"] = target_index
 	character_select_player_state[player_number] = state
 	_refresh_character_grid_visuals()
 
