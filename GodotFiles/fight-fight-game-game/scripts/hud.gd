@@ -63,6 +63,11 @@ var pending_rebind_action: StringName = &""
 var pending_rebind_button: Button = null
 var pending_rebind_mode: StringName = &""
 var pending_rebind_player_number := 0
+var left_axis_nav_held := false
+var right_axis_nav_held := false
+var up_axis_nav_held := false
+var down_axis_nav_held := false
+var main_menu_focus_target: StringName = &"start"
 
 const CONTROLS_TAB_TITLE_P1_KEY := "UI_TAB_PLAYER_1"
 const CONTROLS_TAB_TITLE_P2_KEY := "UI_TAB_PLAYER_2"
@@ -80,6 +85,11 @@ const CONTROLLER_DEVICE_AUTO_LABEL := "Auto (By Player Index)"
 const COLOR_STATUS_OK := Color(0.75, 0.95, 0.8, 1.0)
 const COLOR_STATUS_WARN := Color(0.98, 0.72, 0.72, 1.0)
 const COLOR_STATUS_NEUTRAL := Color(0.85, 0.85, 0.85, 1.0)
+const MENU_HIGHLIGHT_COLOR := Color(1.0, 1.0, 1.0, 1.0)
+const MENU_DIM_COLOR := Color(0.8, 0.8, 0.8, 1.0)
+const CONTROLLER_MENU_NAV_DEADZONE := 0.55
+const MAIN_MENU_TARGET_START: StringName = &"start"
+const MAIN_MENU_TARGET_CONTROLS: StringName = &"controls"
 const REQUIRED_REBIND_ACTIONS: Array[StringName] = [
 	&"ui_left_p1",
 	&"ui_right_p1",
@@ -119,6 +129,10 @@ func _ready():
 	p2_controller_device_option.item_selected.connect(_on_p2_controller_device_option_selected)
 	p1_character_option.item_selected.connect(_on_character_option_changed)
 	p2_character_option.item_selected.connect(_on_character_option_changed)
+	main_menu_start_button.focus_entered.connect(_on_main_menu_start_focus_entered)
+	main_menu_start_button.focus_exited.connect(_refresh_main_menu_button_selection_visuals)
+	main_menu_controls_button.focus_entered.connect(_on_main_menu_controls_focus_entered)
+	main_menu_controls_button.focus_exited.connect(_refresh_main_menu_button_selection_visuals)
 	_initialize_control_binding_buttons()
 	_load_input_modes_from_match_setup()
 	_validate_required_rebind_actions()
@@ -129,6 +143,8 @@ func _ready():
 	_refresh_controller_connection_status_labels()
 	_refresh_controller_assignment_warning()
 	_refresh_start_match_availability()
+	_focus_default_for_visible_menu()
+	_refresh_main_menu_button_selection_visuals()
 	Input.joy_connection_changed.connect(_on_joy_connection_changed)
 
 func _notification(what: int) -> void:
@@ -178,6 +194,40 @@ func _input(event: InputEvent) -> void:
 		_refresh_control_binding_button_texts()
 		get_viewport().set_input_as_handled()
 
+func _unhandled_input(event: InputEvent) -> void:
+	if pending_rebind_action != &"":
+		return
+	if not _is_menu_navigation_active():
+		return
+
+	if event is InputEventJoypadButton:
+		var button_event := event as InputEventJoypadButton
+		if not button_event.pressed:
+			return
+
+		match button_event.button_index:
+			JOY_BUTTON_DPAD_LEFT:
+				_send_ui_action("ui_left")
+				get_viewport().set_input_as_handled()
+			JOY_BUTTON_DPAD_RIGHT:
+				_send_ui_action("ui_right")
+				get_viewport().set_input_as_handled()
+			JOY_BUTTON_DPAD_UP:
+				_send_ui_action("ui_up")
+				get_viewport().set_input_as_handled()
+			JOY_BUTTON_DPAD_DOWN:
+				_send_ui_action("ui_down")
+				get_viewport().set_input_as_handled()
+			JOY_BUTTON_A:
+				_send_ui_action("ui_accept")
+				get_viewport().set_input_as_handled()
+			JOY_BUTTON_B:
+				_handle_controller_back_action()
+				get_viewport().set_input_as_handled()
+
+	if event is InputEventJoypadMotion:
+		_handle_controller_axis_menu_navigation(event as InputEventJoypadMotion)
+
 func update_health(player_number: int, health: float, max_health: float):
 	var health_text := "%.0f / %.0f" % [health, max_health]
 	if player_number == 1:
@@ -188,6 +238,7 @@ func update_health(player_number: int, health: float, max_health: float):
 func show_winner(player_number: int):
 	win_screen.show()
 	win_label.text = "Player %d Wins!" % player_number
+	_focus_default_for_visible_menu()
 
 func hide_winner() -> void:
 	win_screen.hide()
@@ -201,6 +252,8 @@ func show_main_menu(character_options: Array, default_p1: StringName, default_p2
 	controls_screen.hide()
 	character_select_screen.hide()
 	hide_winner()
+	_focus_default_for_visible_menu()
+	_refresh_main_menu_button_selection_visuals()
 
 func hide_main_menu() -> void:
 	main_menu_background.hide()
@@ -220,6 +273,7 @@ func show_controls_screen() -> void:
 	character_select_background.hide()
 	character_select_screen.hide()
 	hide_winner()
+	_focus_default_for_visible_menu()
 
 func hide_controls_screen() -> void:
 	_clear_pending_rebind()
@@ -243,6 +297,7 @@ func show_character_select(character_options: Array, default_p1: StringName, def
 	hide_winner()
 	_populate_character_options(character_options, default_p1, default_p2)
 	_refresh_start_match_availability()
+	_focus_default_for_visible_menu()
 
 func hide_character_select() -> void:
 	character_select_background.hide()
@@ -678,6 +733,9 @@ func _on_joy_connection_changed(_device: int, _connected: bool) -> void:
 	_refresh_controller_connection_status_labels()
 	_refresh_controller_assignment_warning()
 	_refresh_start_match_availability()
+	if main_menu_screen.visible:
+		_focus_default_for_visible_menu()
+	_refresh_main_menu_button_selection_visuals()
 
 func _refresh_start_match_availability() -> void:
 	if character_select_start_warning_label == null:
@@ -758,6 +816,116 @@ func _refresh_controller_assignment_warning() -> void:
 		return
 
 	controller_assignment_warning_label.hide()
+
+func _is_menu_navigation_active() -> bool:
+	return main_menu_screen.visible or controls_screen.visible or character_select_screen.visible or win_screen.visible or controller_reconnect_overlay.visible
+
+func _send_ui_action(action_name: String) -> void:
+	var pressed_event := InputEventAction.new()
+	pressed_event.action = action_name
+	pressed_event.pressed = true
+	Input.parse_input_event(pressed_event)
+
+	var released_event := InputEventAction.new()
+	released_event.action = action_name
+	released_event.pressed = false
+	Input.parse_input_event(released_event)
+
+func _handle_controller_axis_menu_navigation(motion_event: InputEventJoypadMotion) -> void:
+	if motion_event.axis == JOY_AXIS_LEFT_X:
+		if motion_event.axis_value <= -CONTROLLER_MENU_NAV_DEADZONE:
+			if not left_axis_nav_held:
+				left_axis_nav_held = true
+				_send_ui_action("ui_left")
+				get_viewport().set_input_as_handled()
+		else:
+			left_axis_nav_held = false
+
+		if motion_event.axis_value >= CONTROLLER_MENU_NAV_DEADZONE:
+			if not right_axis_nav_held:
+				right_axis_nav_held = true
+				_send_ui_action("ui_right")
+				get_viewport().set_input_as_handled()
+		else:
+			right_axis_nav_held = false
+
+	if motion_event.axis == JOY_AXIS_LEFT_Y:
+		if motion_event.axis_value <= -CONTROLLER_MENU_NAV_DEADZONE:
+			if not up_axis_nav_held:
+				up_axis_nav_held = true
+				_send_ui_action("ui_up")
+				get_viewport().set_input_as_handled()
+		else:
+			up_axis_nav_held = false
+
+		if motion_event.axis_value >= CONTROLLER_MENU_NAV_DEADZONE:
+			if not down_axis_nav_held:
+				down_axis_nav_held = true
+				_send_ui_action("ui_down")
+				get_viewport().set_input_as_handled()
+		else:
+			down_axis_nav_held = false
+
+func _handle_controller_back_action() -> void:
+	if controls_screen.visible:
+		_on_controls_back_button_pressed()
+		return
+	if character_select_screen.visible:
+		_on_back_to_main_menu_button_pressed()
+		return
+	if win_screen.visible:
+		_on_back_to_select_button_pressed()
+
+func _focus_default_for_visible_menu() -> void:
+	if main_menu_screen.visible:
+		if _is_any_controller_connected():
+			if main_menu_focus_target == MAIN_MENU_TARGET_CONTROLS:
+				if not main_menu_controls_button.has_focus():
+					main_menu_controls_button.grab_focus()
+			elif not main_menu_start_button.has_focus():
+				main_menu_start_button.grab_focus()
+		_refresh_main_menu_button_selection_visuals()
+		return
+	if controls_screen.visible:
+		if get_viewport().gui_get_focus_owner() == null:
+			controls_back_button.grab_focus()
+		return
+	if character_select_screen.visible:
+		if get_viewport().gui_get_focus_owner() == null:
+			p1_character_option.grab_focus()
+		return
+	if win_screen.visible:
+		if get_viewport().gui_get_focus_owner() == null:
+			rematch_button.grab_focus()
+
+func _is_any_controller_connected() -> bool:
+	return not Input.get_connected_joypads().is_empty()
+
+func _refresh_main_menu_button_selection_visuals() -> void:
+	var controller_connected: bool = _is_any_controller_connected()
+	if not main_menu_screen.visible:
+		_set_menu_button_selected(main_menu_start_button, false)
+		_set_menu_button_selected(main_menu_controls_button, false)
+		return
+
+	if not controller_connected:
+		_set_menu_button_selected(main_menu_start_button, false)
+		_set_menu_button_selected(main_menu_controls_button, false)
+		return
+
+	_set_menu_button_selected(main_menu_start_button, main_menu_start_button.has_focus())
+	_set_menu_button_selected(main_menu_controls_button, main_menu_controls_button.has_focus())
+
+func _set_menu_button_selected(button: Button, selected: bool) -> void:
+	button.self_modulate = MENU_HIGHLIGHT_COLOR if selected else MENU_DIM_COLOR
+
+func _on_main_menu_start_focus_entered() -> void:
+	main_menu_focus_target = MAIN_MENU_TARGET_START
+	_refresh_main_menu_button_selection_visuals()
+
+func _on_main_menu_controls_focus_entered() -> void:
+	main_menu_focus_target = MAIN_MENU_TARGET_CONTROLS
+	_refresh_main_menu_button_selection_visuals()
 
 func _refresh_controls_tab_titles() -> void:
 	if controls_player_tabs == null or not is_instance_valid(controls_player_tabs):

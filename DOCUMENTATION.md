@@ -153,6 +153,8 @@ Responsibilities:
 - controls screen now shows a warning when both players in controller mode could end up sharing a single controller
 - character select now blocks Start Match when both players in controller mode do not resolve to separate connected controllers
 - gameplay now pauses on controller disconnect and shows a reconnect prompt until controller input is recovered
+- menus now support controller navigation (left stick and D-pad), confirmation (A), and back/cancel (B)
+- when a controller is connected, Main Menu defaults focus to Start and shows it in a selected visual state
 - controls tab titles are set in script from translation keys to support future localization
 - full-screen placeholder background shown behind the controls screen
 - per-player segmented switch (Keyboard or Controller) with active/inactive visual state
