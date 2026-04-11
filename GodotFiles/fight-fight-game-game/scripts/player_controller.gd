@@ -236,8 +236,8 @@ func get_input() -> Dictionary:
 			"right": Input.is_action_pressed("ui_right_p1"),
 			"up_held": Input.is_action_pressed("ui_up_p1"),
 			"down_held": _is_action_pressed_safe("ui_down_p1") or Input.is_action_pressed("ui_down"),
-			"jump": _is_action_just_pressed_safe("jump_p1") or Input.is_action_just_pressed("ui_up_p1"),
-			"jump_hold": _is_action_pressed_safe("jump_p1") or Input.is_action_pressed("ui_up_p1"),
+			"jump": _is_action_just_pressed_safe("jump_p1"),
+			"jump_hold": _is_action_pressed_safe("jump_p1"),
 			"down_tap": _is_action_just_pressed_safe("ui_down_p1") or Input.is_action_just_pressed("ui_down"),
 			"attack": Input.is_action_just_pressed("attack_p1")
 		}
@@ -247,8 +247,8 @@ func get_input() -> Dictionary:
 			"right": Input.is_action_pressed("ui_right_p2") or Input.is_action_pressed("ui_right"),
 			"up_held": Input.is_action_pressed("ui_up_p2") or Input.is_action_pressed("ui_up"),
 			"down_held": _is_action_pressed_safe("ui_down_p2") or Input.is_action_pressed("ui_down"),
-			"jump": _is_action_just_pressed_safe("jump_p2") or Input.is_action_just_pressed("ui_up_p2") or Input.is_action_just_pressed("ui_up"),
-			"jump_hold": _is_action_pressed_safe("jump_p2") or Input.is_action_pressed("ui_up_p2") or Input.is_action_pressed("ui_up"),
+			"jump": _is_action_just_pressed_safe("jump_p2"),
+			"jump_hold": _is_action_pressed_safe("jump_p2"),
 			"down_tap": _is_action_just_pressed_safe("ui_down_p2") or Input.is_action_just_pressed("ui_down"),
 			"attack": Input.is_action_just_pressed("attack_p2")
 		}

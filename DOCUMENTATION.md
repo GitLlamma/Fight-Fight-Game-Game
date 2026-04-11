@@ -62,6 +62,14 @@ This includes:
 - input mappings
 - autoloads such as MatchSetup
 
+Current default controls from the input map:
+- Player 1: `A/D` move, `W` aim up, `Space` jump, `T` attack
+- Player 2: `Left/Right` move, `Up Arrow` aim up, `O` jump, `P` attack
+
+Jump behavior note:
+- Jumping is triggered only by dedicated jump actions (`jump_p1` and `jump_p2`).
+- Up-direction actions are for directional intent and move selection, not jump activation.
+
 ### icon.svg
 The Godot project icon.
 
