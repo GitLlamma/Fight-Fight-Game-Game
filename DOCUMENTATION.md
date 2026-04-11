@@ -132,6 +132,7 @@ Responsibilities:
 - full-screen placeholder background shown behind the character select screen
 - controls setup UI screen (layout only, remapping logic pending)
 - full-screen placeholder background shown behind the controls screen
+- placeholder per-player segmented switch (Keyboard or Controller) with active/inactive visual state and no gameplay wiring yet
 
 ### scripts/
 Stores the main GDScript gameplay logic.

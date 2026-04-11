@@ -26,12 +26,18 @@ signal character_select_requested()
 @onready var controls_background = $ControlsBackground
 @onready var controls_screen = $ControlsScreen
 @onready var controls_back_button = $ControlsScreen/ControlsScroll/ControlsContent/BackButton
+@onready var p1_keyboard_input_button = $ControlsScreen/ControlsScroll/ControlsContent/P1InputModeRow/P1InputModeSwitch/KeyboardButton
+@onready var p1_controller_input_button = $ControlsScreen/ControlsScroll/ControlsContent/P1InputModeRow/P1InputModeSwitch/ControllerButton
+@onready var p2_keyboard_input_button = $ControlsScreen/ControlsScroll/ControlsContent/P2InputModeRow/P2InputModeSwitch/KeyboardButton
+@onready var p2_controller_input_button = $ControlsScreen/ControlsScroll/ControlsContent/P2InputModeRow/P2InputModeSwitch/ControllerButton
 
 var character_ids_by_index: Array[StringName] = []
 var character_options_by_id := {}
 var cached_character_options: Array = []
 var cached_default_p1: StringName = &"default_fighter"
 var cached_default_p2: StringName = &"default_fighter"
+var p1_uses_controller := false
+var p2_uses_controller := false
 
 func _ready():
 	main_menu_background.hide()
@@ -48,8 +54,13 @@ func _ready():
 	start_match_button.pressed.connect(_on_start_match_button_pressed)
 	back_to_main_menu_button.pressed.connect(_on_back_to_main_menu_button_pressed)
 	controls_back_button.pressed.connect(_on_controls_back_button_pressed)
+	p1_keyboard_input_button.pressed.connect(_on_p1_keyboard_input_button_pressed)
+	p1_controller_input_button.pressed.connect(_on_p1_controller_input_button_pressed)
+	p2_keyboard_input_button.pressed.connect(_on_p2_keyboard_input_button_pressed)
+	p2_controller_input_button.pressed.connect(_on_p2_controller_input_button_pressed)
 	p1_character_option.item_selected.connect(_on_character_option_changed)
 	p2_character_option.item_selected.connect(_on_character_option_changed)
+	_refresh_input_mode_switch_visuals()
 
 func update_health(player_number: int, health: float, max_health: float):
 	var health_text := "%.0f / %.0f" % [health, max_health]
@@ -186,6 +197,35 @@ func _on_controls_back_button_pressed() -> void:
 
 func _on_back_to_main_menu_button_pressed() -> void:
 	show_main_menu(cached_character_options, cached_default_p1, cached_default_p2)
+
+func _on_p1_keyboard_input_button_pressed() -> void:
+	p1_uses_controller = false
+	_refresh_input_mode_switch_visuals()
+
+func _on_p1_controller_input_button_pressed() -> void:
+	p1_uses_controller = true
+	_refresh_input_mode_switch_visuals()
+
+func _on_p2_keyboard_input_button_pressed() -> void:
+	p2_uses_controller = false
+	_refresh_input_mode_switch_visuals()
+
+func _on_p2_controller_input_button_pressed() -> void:
+	p2_uses_controller = true
+	_refresh_input_mode_switch_visuals()
+
+func _refresh_input_mode_switch_visuals() -> void:
+	_set_switch_button_visual(p1_keyboard_input_button, not p1_uses_controller)
+	_set_switch_button_visual(p1_controller_input_button, p1_uses_controller)
+	_set_switch_button_visual(p2_keyboard_input_button, not p2_uses_controller)
+	_set_switch_button_visual(p2_controller_input_button, p2_uses_controller)
+
+func _set_switch_button_visual(button: Button, active: bool) -> void:
+	button.button_pressed = active
+	if active:
+		button.self_modulate = Color(0.85, 1.0, 0.9, 1.0)
+	else:
+		button.self_modulate = Color(0.55, 0.55, 0.55, 1.0)
 
 func _on_rematch_button_pressed() -> void:
 	rematch_requested.emit()

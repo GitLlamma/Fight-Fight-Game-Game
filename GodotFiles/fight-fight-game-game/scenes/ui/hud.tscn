@@ -189,6 +189,27 @@ autowrap_mode = 3
 [node name="P1SectionLabel" type="Label" parent="ControlsScreen/ControlsScroll/ControlsContent"]
 text = "Player 1"
 
+[node name="P1InputModeRow" type="HBoxContainer" parent="ControlsScreen/ControlsScroll/ControlsContent"]
+theme_override_constants/separation = 12
+
+[node name="P1InputModeLabel" type="Label" parent="ControlsScreen/ControlsScroll/ControlsContent/P1InputModeRow"]
+size_flags_horizontal = 3
+text = "Input Mode"
+
+[node name="P1InputModeSwitch" type="HBoxContainer" parent="ControlsScreen/ControlsScroll/ControlsContent/P1InputModeRow"]
+size_flags_horizontal = 3
+theme_override_constants/separation = 0
+
+[node name="KeyboardButton" type="Button" parent="ControlsScreen/ControlsScroll/ControlsContent/P1InputModeRow/P1InputModeSwitch"]
+size_flags_horizontal = 3
+text = "Keyboard"
+toggle_mode = true
+
+[node name="ControllerButton" type="Button" parent="ControlsScreen/ControlsScroll/ControlsContent/P1InputModeRow/P1InputModeSwitch"]
+size_flags_horizontal = 3
+text = "Controller"
+toggle_mode = true
+
 [node name="P1MoveRow" type="HBoxContainer" parent="ControlsScreen/ControlsScroll/ControlsContent"]
 theme_override_constants/separation = 12
 
@@ -235,6 +256,27 @@ text = "T"
 
 [node name="P2SectionLabel" type="Label" parent="ControlsScreen/ControlsScroll/ControlsContent"]
 text = "Player 2"
+
+[node name="P2InputModeRow" type="HBoxContainer" parent="ControlsScreen/ControlsScroll/ControlsContent"]
+theme_override_constants/separation = 12
+
+[node name="P2InputModeLabel" type="Label" parent="ControlsScreen/ControlsScroll/ControlsContent/P2InputModeRow"]
+size_flags_horizontal = 3
+text = "Input Mode"
+
+[node name="P2InputModeSwitch" type="HBoxContainer" parent="ControlsScreen/ControlsScroll/ControlsContent/P2InputModeRow"]
+size_flags_horizontal = 3
+theme_override_constants/separation = 0
+
+[node name="KeyboardButton" type="Button" parent="ControlsScreen/ControlsScroll/ControlsContent/P2InputModeRow/P2InputModeSwitch"]
+size_flags_horizontal = 3
+text = "Keyboard"
+toggle_mode = true
+
+[node name="ControllerButton" type="Button" parent="ControlsScreen/ControlsScroll/ControlsContent/P2InputModeRow/P2InputModeSwitch"]
+size_flags_horizontal = 3
+text = "Controller"
+toggle_mode = true
 
 [node name="P2MoveRow" type="HBoxContainer" parent="ControlsScreen/ControlsScroll/ControlsContent"]
 theme_override_constants/separation = 12
