@@ -155,6 +155,8 @@ Responsibilities:
 - gameplay now pauses on controller disconnect and shows a reconnect prompt until controller input is recovered
 - menus now support controller navigation (left stick and D-pad), confirmation (A), and back/cancel (B)
 - when a controller is connected, Main Menu defaults focus to Start and shows it in a selected visual state
+- Controls menu defaults focus to the current tab's active Input Mode button (Keyboard or Controller)
+- in Controls, controller LB/RB switches between Player 1 and Player 2 tabs and applies focus to the active tab's Input Mode button
 - controls tab titles are set in script from translation keys to support future localization
 - full-screen placeholder background shown behind the controls screen
 - per-player segmented switch (Keyboard or Controller) with active/inactive visual state

@@ -224,6 +224,14 @@ func _unhandled_input(event: InputEvent) -> void:
 			JOY_BUTTON_B:
 				_handle_controller_back_action()
 				get_viewport().set_input_as_handled()
+			JOY_BUTTON_LEFT_SHOULDER:
+				if controls_screen.visible:
+					_switch_controls_tab(-1)
+					get_viewport().set_input_as_handled()
+			JOY_BUTTON_RIGHT_SHOULDER:
+				if controls_screen.visible:
+					_switch_controls_tab(1)
+					get_viewport().set_input_as_handled()
 
 	if event is InputEventJoypadMotion:
 		_handle_controller_axis_menu_navigation(event as InputEventJoypadMotion)
@@ -887,8 +895,7 @@ func _focus_default_for_visible_menu() -> void:
 		_refresh_main_menu_button_selection_visuals()
 		return
 	if controls_screen.visible:
-		if get_viewport().gui_get_focus_owner() == null:
-			controls_back_button.grab_focus()
+		_focus_default_controls_menu_item()
 		return
 	if character_select_screen.visible:
 		if get_viewport().gui_get_focus_owner() == null:
@@ -918,6 +925,39 @@ func _refresh_main_menu_button_selection_visuals() -> void:
 
 func _set_menu_button_selected(button: Button, selected: bool) -> void:
 	button.self_modulate = MENU_HIGHLIGHT_COLOR if selected else MENU_DIM_COLOR
+
+func _focus_default_controls_menu_item() -> void:
+	var focus_owner: Control = get_viewport().gui_get_focus_owner()
+	if focus_owner != null and controls_screen.is_ancestor_of(focus_owner) and focus_owner.is_visible_in_tree():
+		return
+
+	var current_tab: int = controls_player_tabs.current_tab
+	var prefers_controller: bool = p1_uses_controller if current_tab == 0 else p2_uses_controller
+	var preferred_input_mode_button: Button
+	if current_tab == 0:
+		preferred_input_mode_button = p1_controller_input_button if prefers_controller else p1_keyboard_input_button
+	else:
+		preferred_input_mode_button = p2_controller_input_button if prefers_controller else p2_keyboard_input_button
+	if preferred_input_mode_button != null:
+		preferred_input_mode_button.grab_focus()
+		return
+
+	var fallback_button: Button = controls_back_button
+	fallback_button.grab_focus()
+
+func _switch_controls_tab(direction: int) -> void:
+	if controls_player_tabs == null or controls_player_tabs.get_tab_count() <= 0:
+		return
+
+	var tab_count: int = controls_player_tabs.get_tab_count()
+	var next_tab: int = controls_player_tabs.current_tab + direction
+	if next_tab < 0:
+		next_tab = tab_count - 1
+	elif next_tab >= tab_count:
+		next_tab = 0
+
+	controls_player_tabs.current_tab = next_tab
+	call_deferred("_focus_default_controls_menu_item")
 
 func _on_main_menu_start_focus_entered() -> void:
 	main_menu_focus_target = MAIN_MENU_TARGET_START
