@@ -132,7 +132,7 @@ Responsibilities:
 - full-screen placeholder background shown behind the main menu
 - win screen
 - rematch and return-to-select buttons
-- character select interface with Start and Back navigation
+- character select interface with Player 1 (left) and Player 2 (right) columns plus Start and Back actions
 - full-screen placeholder background shown behind the character select screen
 - controls setup UI screen with separate Player 1 and Player 2 tabs
 - keyboard remapping for per-player actions (left, right, up, down, jump, attack) via click-then-press-key flow

@@ -16,13 +16,12 @@ signal character_select_requested()
 @onready var back_to_select_button = $WinScreen/WinContent/BackToSelectButton
 @onready var character_select_background = $CharacterSelectBackground
 @onready var character_select_screen = $CharacterSelectScreen
-@onready var select_scroll = $CharacterSelectScreen/SelectScroll
-@onready var p1_character_option = $CharacterSelectScreen/SelectScroll/SelectContent/P1Row/P1CharacterOption
-@onready var p2_character_option = $CharacterSelectScreen/SelectScroll/SelectContent/P2Row/P2CharacterOption
-@onready var p1_preview_label = $CharacterSelectScreen/SelectScroll/SelectContent/P1PreviewLabel
-@onready var p2_preview_label = $CharacterSelectScreen/SelectScroll/SelectContent/P2PreviewLabel
-@onready var start_match_button = $CharacterSelectScreen/SelectScroll/SelectContent/StartMatchButton
-@onready var back_to_main_menu_button = $CharacterSelectScreen/SelectScroll/SelectContent/BackToMainMenuButton
+@onready var p1_character_option = $CharacterSelectScreen/SelectContent/PlayerColumns/P1Column/P1CharacterOption
+@onready var p2_character_option = $CharacterSelectScreen/SelectContent/PlayerColumns/P2Column/P2CharacterOption
+@onready var p1_preview_label = $CharacterSelectScreen/SelectContent/PlayerColumns/P1Column/P1PreviewLabel
+@onready var p2_preview_label = $CharacterSelectScreen/SelectContent/PlayerColumns/P2Column/P2PreviewLabel
+@onready var start_match_button = $CharacterSelectScreen/SelectContent/SelectActions/StartMatchButton
+@onready var back_to_main_menu_button = $CharacterSelectScreen/SelectContent/SelectActions/BackToMainMenuButton
 @onready var controls_background = $ControlsBackground
 @onready var controls_screen = $ControlsScreen
 @onready var controls_player_tabs = $ControlsScreen/ControlsContent/PlayerTabs
@@ -185,7 +184,6 @@ func show_character_select(character_options: Array, default_p1: StringName, def
 	controls_screen.hide()
 	character_select_screen.show()
 	hide_winner()
-	select_scroll.scroll_vertical = 0
 	_populate_character_options(character_options, default_p1, default_p2)
 
 func hide_character_select() -> void:

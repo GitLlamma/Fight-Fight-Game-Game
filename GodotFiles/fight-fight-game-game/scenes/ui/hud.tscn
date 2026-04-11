@@ -92,64 +92,69 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -190.0
-offset_top = -180.0
-offset_right = 190.0
-offset_bottom = 180.0
+offset_left = -280.0
+offset_top = -190.0
+offset_right = 280.0
+offset_bottom = 190.0
 
-[node name="SelectScroll" type="ScrollContainer" parent="CharacterSelectScreen"]
+[node name="SelectContent" type="VBoxContainer" parent="CharacterSelectScreen"]
 offset_left = 18.0
 offset_top = 18.0
-offset_right = 362.0
-offset_bottom = 342.0
-
-[node name="SelectContent" type="VBoxContainer" parent="CharacterSelectScreen/SelectScroll"]
-custom_minimum_size = Vector2(344, 0)
+offset_right = 542.0
+offset_bottom = 362.0
 theme_override_constants/separation = 10
 
-[node name="TitleLabel" type="Label" parent="CharacterSelectScreen/SelectScroll/SelectContent"]
+[node name="TitleLabel" type="Label" parent="CharacterSelectScreen/SelectContent"]
 text = "Match Setup"
 horizontal_alignment = 1
 
-[node name="P1Row" type="HBoxContainer" parent="CharacterSelectScreen/SelectScroll/SelectContent"]
-theme_override_constants/separation = 12
+[node name="PlayerColumns" type="HBoxContainer" parent="CharacterSelectScreen/SelectContent"]
+size_flags_vertical = 3
+theme_override_constants/separation = 16
 
-[node name="P1Label" type="Label" parent="CharacterSelectScreen/SelectScroll/SelectContent/P1Row"]
+[node name="P1Column" type="VBoxContainer" parent="CharacterSelectScreen/SelectContent/PlayerColumns"]
 size_flags_horizontal = 3
+theme_override_constants/separation = 8
+
+[node name="P1Label" type="Label" parent="CharacterSelectScreen/SelectContent/PlayerColumns/P1Column"]
 text = "Player 1"
+horizontal_alignment = 1
 
-[node name="P1CharacterOption" type="OptionButton" parent="CharacterSelectScreen/SelectScroll/SelectContent/P1Row"]
-size_flags_horizontal = 3
+[node name="P1CharacterOption" type="OptionButton" parent="CharacterSelectScreen/SelectContent/PlayerColumns/P1Column"]
 
-[node name="P1PreviewLabel" type="Label" parent="CharacterSelectScreen/SelectScroll/SelectContent"]
+[node name="P1PreviewLabel" type="Label" parent="CharacterSelectScreen/SelectContent/PlayerColumns/P1Column"]
 text = ""
 autowrap_mode = 3
-custom_minimum_size = Vector2(0, 68)
+custom_minimum_size = Vector2(0, 120)
 
-[node name="P2Row" type="HBoxContainer" parent="CharacterSelectScreen/SelectScroll/SelectContent"]
-theme_override_constants/separation = 12
-
-[node name="P2Label" type="Label" parent="CharacterSelectScreen/SelectScroll/SelectContent/P2Row"]
+[node name="P2Column" type="VBoxContainer" parent="CharacterSelectScreen/SelectContent/PlayerColumns"]
 size_flags_horizontal = 3
+theme_override_constants/separation = 8
+
+[node name="P2Label" type="Label" parent="CharacterSelectScreen/SelectContent/PlayerColumns/P2Column"]
 text = "Player 2"
+horizontal_alignment = 1
 
-[node name="P2CharacterOption" type="OptionButton" parent="CharacterSelectScreen/SelectScroll/SelectContent/P2Row"]
-size_flags_horizontal = 3
+[node name="P2CharacterOption" type="OptionButton" parent="CharacterSelectScreen/SelectContent/PlayerColumns/P2Column"]
 
-[node name="P2PreviewLabel" type="Label" parent="CharacterSelectScreen/SelectScroll/SelectContent"]
+[node name="P2PreviewLabel" type="Label" parent="CharacterSelectScreen/SelectContent/PlayerColumns/P2Column"]
 text = ""
 autowrap_mode = 3
-custom_minimum_size = Vector2(0, 68)
+custom_minimum_size = Vector2(0, 120)
 
-[node name="HintLabel" type="Label" parent="CharacterSelectScreen/SelectScroll/SelectContent"]
+[node name="HintLabel" type="Label" parent="CharacterSelectScreen/SelectContent"]
 text = "Pick fighters, then start the match. Rematch keeps the same selections."
 autowrap_mode = 3
 
-[node name="StartMatchButton" type="Button" parent="CharacterSelectScreen/SelectScroll/SelectContent"]
-text = "Start Match"
+[node name="SelectActions" type="HBoxContainer" parent="CharacterSelectScreen/SelectContent"]
+alignment = 1
+theme_override_constants/separation = 12
 
-[node name="BackToMainMenuButton" type="Button" parent="CharacterSelectScreen/SelectScroll/SelectContent"]
+[node name="BackToMainMenuButton" type="Button" parent="CharacterSelectScreen/SelectContent/SelectActions"]
 text = "Back"
+
+[node name="StartMatchButton" type="Button" parent="CharacterSelectScreen/SelectContent/SelectActions"]
+text = "Start Match"
 
 [node name="ControlsBackground" type="ColorRect" parent="."]
 anchor_right = 1.0
