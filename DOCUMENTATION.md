@@ -145,6 +145,8 @@ Responsibilities:
 - if a selected controller is unavailable at match start, assignment falls back to deterministic auto selection
 - controls screen now shows per-player controller connection status using live joypad detection
 - controls screen now shows a warning when both players in controller mode could end up sharing a single controller
+- character select now blocks Start Match when both players in controller mode do not resolve to separate connected controllers
+- gameplay now pauses on controller disconnect and shows a reconnect prompt until controller input is recovered
 - controls tab titles are set in script from translation keys to support future localization
 - full-screen placeholder background shown behind the controls screen
 - per-player segmented switch (Keyboard or Controller) with active/inactive visual state
@@ -180,6 +182,7 @@ Responsibilities:
 - reads persisted per-player controller jump/attack bindings from MatchSetup and applies them to spawned players
 - reads persisted per-player preferred controller device ID and honors it when available
 - resolves controller assignments once per match spawn and avoids duplicate device assignment when alternatives exist
+- listens for controller connection changes during live matches and pauses/resumes around controller recovery
 - spawns and despawns players
 - forwards health and winner events to the HUD
 
@@ -215,6 +218,8 @@ Responsibilities:
 - handles controller button remapping for jump and attack when a player is set to controller mode
 - handles per-player controller device selection and persists it
 - surfaces controller assignment warnings for duplicate/insufficient connected controllers
+- enforces controller assignment validity before starting a match
+- shows an in-match reconnect overlay while waiting for controller recovery after disconnect
 
 #### scripts/match_setup.gd
 Stores match setup state as an autoload singleton.

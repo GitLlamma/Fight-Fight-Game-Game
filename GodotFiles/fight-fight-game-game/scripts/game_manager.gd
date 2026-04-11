@@ -22,6 +22,19 @@ var player1: Player
 var player2: Player
 var game_over := false
 var hud: CanvasLayer
+var active_player_input_modes := {
+	1: INPUT_MODE_KEYBOARD,
+	2: INPUT_MODE_KEYBOARD,
+}
+var active_controller_device_ids := {
+	1: -1,
+	2: -1,
+}
+var players_waiting_for_controller := {
+	1: false,
+	2: false,
+}
+var controller_disconnect_pause_active := false
 
 func _ready():
 	hud = get_node("HUD")
@@ -30,10 +43,16 @@ func _ready():
 	hud.match_start_requested.connect(_on_match_start_requested)
 	hud.rematch_requested.connect(_on_rematch_requested)
 	hud.character_select_requested.connect(_on_character_select_requested)
+	Input.joy_connection_changed.connect(_on_joy_connection_changed)
 	_sync_selected_characters()
 	hud.show_main_menu(_get_available_character_options(), player1_character_id, player2_character_id)
 
 func _spawn_match_players():
+	get_tree().paused = false
+	controller_disconnect_pause_active = false
+	players_waiting_for_controller[1] = false
+	players_waiting_for_controller[2] = false
+	hud.hide_controller_reconnect_prompt()
 	_sync_selected_characters()
 	game_over = false
 	hud.hide_winner()
@@ -50,6 +69,10 @@ func _spawn_match_players():
 	var player2_spawn: Node2D = get_node("Arena/PlayerSpawns/Player2Spawn")
 	player1 = _spawn_player(1, "Player1", player1_spawn, player1_character_id, int(controller_assignments.get(1, -1)))
 	player2 = _spawn_player(2, "Player2", player2_spawn, player2_character_id, int(controller_assignments.get(2, -1)))
+	active_player_input_modes[1] = _get_player_input_mode(1)
+	active_player_input_modes[2] = _get_player_input_mode(2)
+	active_controller_device_ids[1] = int(controller_assignments.get(1, -1))
+	active_controller_device_ids[2] = int(controller_assignments.get(2, -1))
 
 	# Emit initial HUD values once numbers are assigned and HUD is connected.
 	if player1:
@@ -124,6 +147,11 @@ func _on_character_select_requested() -> void:
 	player1 = null
 	player2 = null
 	game_over = false
+	get_tree().paused = false
+	controller_disconnect_pause_active = false
+	players_waiting_for_controller[1] = false
+	players_waiting_for_controller[2] = false
+	hud.hide_controller_reconnect_prompt()
 	hud.hide_winner()
 	hud.show_character_select(_get_available_character_options(), player1_character_id, player2_character_id)
 
@@ -210,6 +238,93 @@ func _get_controller_binding_for_player(player_number: int, binding_name: String
 	if match_setup == null:
 		return fallback_button
 	return int(match_setup.get_player_controller_binding(player_number, binding_name, fallback_button))
+
+func _on_joy_connection_changed(_device: int, _connected: bool) -> void:
+	if not _is_match_live():
+		return
+
+	for player_number in [1, 2]:
+		if active_player_input_modes[player_number] != INPUT_MODE_CONTROLLER:
+			continue
+		var assigned_device_id: int = int(active_controller_device_ids[player_number])
+		if assigned_device_id < 0:
+			continue
+		if not Input.get_connected_joypads().has(assigned_device_id):
+			players_waiting_for_controller[player_number] = true
+
+	if players_waiting_for_controller[1] or players_waiting_for_controller[2]:
+		controller_disconnect_pause_active = true
+		get_tree().paused = true
+		_attempt_controller_recovery()
+
+func _attempt_controller_recovery() -> void:
+	if not controller_disconnect_pause_active:
+		return
+
+	var connected_devices: PackedInt32Array = Input.get_connected_joypads()
+	var reserved_devices: Array[int] = []
+	for player_number in [1, 2]:
+		if active_player_input_modes[player_number] != INPUT_MODE_CONTROLLER:
+			continue
+		if bool(players_waiting_for_controller[player_number]):
+			continue
+		var active_device: int = int(active_controller_device_ids[player_number])
+		if active_device >= 0 and connected_devices.has(active_device):
+			reserved_devices.append(active_device)
+
+	for player_number in [1, 2]:
+		if not bool(players_waiting_for_controller[player_number]):
+			continue
+
+		var current_device: int = int(active_controller_device_ids[player_number])
+		if current_device >= 0 and connected_devices.has(current_device) and not reserved_devices.has(current_device):
+			reserved_devices.append(current_device)
+			players_waiting_for_controller[player_number] = false
+			continue
+
+		var fallback_device: int = _pick_fallback_controller_device(connected_devices, reserved_devices)
+		if fallback_device >= 0:
+			reserved_devices.append(fallback_device)
+			active_controller_device_ids[player_number] = fallback_device
+			_apply_runtime_player_input_source(player_number, fallback_device)
+			players_waiting_for_controller[player_number] = false
+
+	var still_waiting: Array[int] = []
+	for player_number in [1, 2]:
+		if bool(players_waiting_for_controller[player_number]):
+			still_waiting.append(player_number)
+
+	if still_waiting.is_empty():
+		controller_disconnect_pause_active = false
+		get_tree().paused = false
+		hud.hide_controller_reconnect_prompt()
+		return
+
+	hud.show_controller_reconnect_prompt(still_waiting)
+
+func _pick_fallback_controller_device(connected_devices: PackedInt32Array, reserved_devices: Array[int]) -> int:
+	for device_id in connected_devices:
+		if not reserved_devices.has(device_id):
+			return device_id
+	return -1
+
+func _apply_runtime_player_input_source(player_number: int, controller_device_id: int) -> void:
+	var player_node: Player = _get_player_node(player_number)
+	if player_node == null:
+		return
+	player_node.configure_input_source(INPUT_MODE_CONTROLLER, controller_device_id)
+
+func _get_player_node(player_number: int) -> Player:
+	if player_number == 1:
+		return player1
+	if player_number == 2:
+		return player2
+	return null
+
+func _is_match_live() -> bool:
+	if game_over:
+		return false
+	return player1 != null and is_instance_valid(player1) and player2 != null and is_instance_valid(player2)
 
 func _load_character_profile(character_id: StringName) -> CharacterData:
 	var requested_id: StringName = character_id if character_id != &"" else DEFAULT_CHARACTER_ID

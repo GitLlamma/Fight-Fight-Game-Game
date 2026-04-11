@@ -146,6 +146,11 @@ custom_minimum_size = Vector2(0, 120)
 text = "Pick fighters, then start the match. Rematch keeps the same selections."
 autowrap_mode = 3
 
+[node name="StartWarningLabel" type="Label" parent="CharacterSelectScreen/SelectContent"]
+visible = false
+text = "Controller assignment warning"
+autowrap_mode = 3
+
 [node name="SelectActions" type="HBoxContainer" parent="CharacterSelectScreen/SelectContent"]
 alignment = 1
 theme_override_constants/separation = 12
@@ -406,3 +411,31 @@ autowrap_mode = 3
 
 [node name="BackButton" type="Button" parent="ControlsScreen/ControlsContent"]
 text = "Back"
+
+[node name="ControllerReconnectOverlay" type="PanelContainer" parent="."]
+visible = false
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -210.0
+offset_top = -64.0
+offset_right = 210.0
+offset_bottom = 64.0
+
+[node name="ReconnectContent" type="VBoxContainer" parent="ControllerReconnectOverlay"]
+offset_left = 18.0
+offset_top = 18.0
+offset_right = 402.0
+offset_bottom = 110.0
+theme_override_constants/separation = 10
+
+[node name="ReconnectTitleLabel" type="Label" parent="ControllerReconnectOverlay/ReconnectContent"]
+text = "Controller Disconnected"
+horizontal_alignment = 1
+
+[node name="ReconnectBodyLabel" type="Label" parent="ControllerReconnectOverlay/ReconnectContent"]
+text = "Waiting for controller reconnection..."
+horizontal_alignment = 1
+autowrap_mode = 3

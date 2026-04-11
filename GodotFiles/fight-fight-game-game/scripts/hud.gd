@@ -20,8 +20,11 @@ signal character_select_requested()
 @onready var p2_character_option = $CharacterSelectScreen/SelectContent/PlayerColumns/P2Column/P2CharacterOption
 @onready var p1_preview_label = $CharacterSelectScreen/SelectContent/PlayerColumns/P1Column/P1PreviewLabel
 @onready var p2_preview_label = $CharacterSelectScreen/SelectContent/PlayerColumns/P2Column/P2PreviewLabel
+@onready var character_select_start_warning_label = $CharacterSelectScreen/SelectContent/StartWarningLabel
 @onready var start_match_button = $CharacterSelectScreen/SelectContent/SelectActions/StartMatchButton
 @onready var back_to_main_menu_button = $CharacterSelectScreen/SelectContent/SelectActions/BackToMainMenuButton
+@onready var controller_reconnect_overlay = $ControllerReconnectOverlay
+@onready var controller_reconnect_body_label = $ControllerReconnectOverlay/ReconnectContent/ReconnectBodyLabel
 @onready var controls_background = $ControlsBackground
 @onready var controls_screen = $ControlsScreen
 @onready var controls_player_tabs = $ControlsScreen/ControlsContent/PlayerTabs
@@ -100,6 +103,7 @@ func _ready():
 	character_select_screen.hide()
 	controls_background.hide()
 	controls_screen.hide()
+	controller_reconnect_overlay.hide()
 	main_menu_start_button.pressed.connect(_on_main_menu_start_button_pressed)
 	main_menu_controls_button.pressed.connect(_on_main_menu_controls_button_pressed)
 	rematch_button.pressed.connect(_on_rematch_button_pressed)
@@ -124,6 +128,7 @@ func _ready():
 	_refresh_controller_device_options()
 	_refresh_controller_connection_status_labels()
 	_refresh_controller_assignment_warning()
+	_refresh_start_match_availability()
 	Input.joy_connection_changed.connect(_on_joy_connection_changed)
 
 func _notification(what: int) -> void:
@@ -234,8 +239,10 @@ func show_character_select(character_options: Array, default_p1: StringName, def
 	controls_background.hide()
 	controls_screen.hide()
 	character_select_screen.show()
+	controller_reconnect_overlay.hide()
 	hide_winner()
 	_populate_character_options(character_options, default_p1, default_p2)
+	_refresh_start_match_availability()
 
 func hide_character_select() -> void:
 	character_select_background.hide()
@@ -298,6 +305,10 @@ func _on_character_option_changed(_index: int) -> void:
 	_refresh_character_previews()
 
 func _on_start_match_button_pressed() -> void:
+	if not _is_controller_assignment_valid_for_match_start():
+		_refresh_start_match_availability()
+		return
+
 	match_start_requested.emit(
 		_get_selected_character_id(p1_character_option),
 		_get_selected_character_id(p2_character_option)
@@ -650,6 +661,52 @@ func _on_joy_connection_changed(_device: int, _connected: bool) -> void:
 	_refresh_controller_device_options()
 	_refresh_controller_connection_status_labels()
 	_refresh_controller_assignment_warning()
+	_refresh_start_match_availability()
+
+func _refresh_start_match_availability() -> void:
+	if character_select_start_warning_label == null:
+		return
+
+	var can_start: bool = _is_controller_assignment_valid_for_match_start()
+	start_match_button.disabled = not can_start
+	if can_start:
+		character_select_start_warning_label.hide()
+		return
+
+	character_select_start_warning_label.text = "Cannot start: both players in controller mode must be assigned different connected controllers."
+	character_select_start_warning_label.self_modulate = COLOR_STATUS_WARN
+	character_select_start_warning_label.show()
+
+func _is_controller_assignment_valid_for_match_start() -> bool:
+	if not p1_uses_controller or not p2_uses_controller:
+		return true
+
+	var connected_devices: PackedInt32Array = Input.get_connected_joypads()
+	if connected_devices.size() < 2:
+		return false
+
+	var p1_device: int = _resolve_controller_device_for_player(1, connected_devices)
+	var p2_device: int = _resolve_controller_device_for_player(2, connected_devices)
+	if p1_device < 0 or p2_device < 0:
+		return false
+	return p1_device != p2_device
+
+func show_controller_reconnect_prompt(waiting_players: Array[int]) -> void:
+	if controller_reconnect_overlay == null:
+		return
+	if waiting_players.is_empty():
+		hide_controller_reconnect_prompt()
+		return
+
+	var player_tokens: Array[String] = []
+	for player_number in waiting_players:
+		player_tokens.append("P%d" % player_number)
+	controller_reconnect_body_label.text = "Waiting for controller input recovery: %s" % ", ".join(player_tokens)
+	controller_reconnect_overlay.show()
+
+func hide_controller_reconnect_prompt() -> void:
+	if controller_reconnect_overlay:
+		controller_reconnect_overlay.hide()
 
 func _refresh_controller_assignment_warning() -> void:
 	if controller_assignment_warning_label == null:
