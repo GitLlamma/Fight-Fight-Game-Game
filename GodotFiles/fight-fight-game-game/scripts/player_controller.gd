@@ -18,6 +18,8 @@ const DEFAULT_MOVE_EXECUTOR_SCRIPT: Script = preload("res://scripts/characters/d
 const MOVE_DATA_SCRIPT: Script = preload("res://scripts/characters/move_data.gd")
 const DEFAULT_CHARACTER_ID := "default_fighter"
 const SPEED_CHARACTER_ID := "speed_fighter"
+const INPUT_MODE_KEYBOARD: StringName = &"keyboard"
+const INPUT_MODE_CONTROLLER: StringName = &"controller"
 
 @export var character_profile: CharacterData
 
@@ -52,6 +54,9 @@ const SPEED_CHARACTER_ID := "speed_fighter"
 @export var attack_cooldown = 0.5
 @export var damage_flash_duration = 0.12
 @export var show_directional_intent_debug := true
+@export var controller_axis_deadzone := 0.4
+@export var controller_jump_button: JoyButton = JOY_BUTTON_A
+@export var controller_attack_button: JoyButton = JOY_BUTTON_X
 
 var health: float
 var is_attacking = false
@@ -59,12 +64,17 @@ var attack_timer = 0.0
 var current_move_damage = 0.0
 var player_number = 1
 var facing_dir = 1
+var input_mode: StringName = INPUT_MODE_KEYBOARD
+var controller_device_id := -1
 var is_damage_flashing = false
 var jump_hold_timer = 0.0
 var jump_count = 0
 var double_jump_control_timer = 0.0
 var is_fast_falling = false
 var directional_intent_debug_label: Label
+var previous_controller_down_held := false
+var previous_controller_jump_held := false
+var previous_controller_attack_held := false
 
 @onready var sprite = $Sprite
 @onready var attack_hitbox = $AttackHitbox
@@ -237,6 +247,12 @@ func _physics_process(delta):
 	move_and_slide()
 
 func get_input() -> Dictionary:
+	if _uses_controller_movement_input():
+		return _get_controller_movement_input()
+
+	return _get_keyboard_input()
+
+func _get_keyboard_input() -> Dictionary:
 	if player_number == 1:
 		return {
 			"left": Input.is_action_pressed("ui_left_p1"),
@@ -259,6 +275,45 @@ func get_input() -> Dictionary:
 			"down_tap": _is_action_just_pressed_safe("ui_down_p2"),
 			"attack": Input.is_action_just_pressed("attack_p2")
 		}
+
+func _uses_controller_movement_input() -> bool:
+	if input_mode != INPUT_MODE_CONTROLLER:
+		return false
+	if controller_device_id < 0:
+		return false
+	return Input.get_connected_joypads().has(controller_device_id)
+
+func _get_controller_movement_input() -> Dictionary:
+	var axis_x: float = Input.get_joy_axis(controller_device_id, JOY_AXIS_LEFT_X)
+	var axis_y: float = Input.get_joy_axis(controller_device_id, JOY_AXIS_LEFT_Y)
+	var dpad_left: bool = Input.is_joy_button_pressed(controller_device_id, JOY_BUTTON_DPAD_LEFT)
+	var dpad_right: bool = Input.is_joy_button_pressed(controller_device_id, JOY_BUTTON_DPAD_RIGHT)
+	var dpad_up: bool = Input.is_joy_button_pressed(controller_device_id, JOY_BUTTON_DPAD_UP)
+	var dpad_down: bool = Input.is_joy_button_pressed(controller_device_id, JOY_BUTTON_DPAD_DOWN)
+
+	var left_held: bool = dpad_left or axis_x <= -controller_axis_deadzone
+	var right_held: bool = dpad_right or axis_x >= controller_axis_deadzone
+	var up_held: bool = dpad_up or axis_y <= -controller_axis_deadzone
+	var down_held: bool = dpad_down or axis_y >= controller_axis_deadzone
+	var down_tap: bool = down_held and not previous_controller_down_held
+	var jump_held: bool = Input.is_joy_button_pressed(controller_device_id, controller_jump_button)
+	var jump_pressed: bool = jump_held and not previous_controller_jump_held
+	var attack_held: bool = Input.is_joy_button_pressed(controller_device_id, controller_attack_button)
+	var attack_pressed: bool = attack_held and not previous_controller_attack_held
+	previous_controller_down_held = down_held
+	previous_controller_jump_held = jump_held
+	previous_controller_attack_held = attack_held
+
+	return {
+		"left": left_held,
+		"right": right_held,
+		"up_held": up_held,
+		"down_held": down_held,
+		"jump": jump_pressed,
+		"jump_hold": jump_held,
+		"down_tap": down_tap,
+		"attack": attack_pressed,
+	}
 
 func _build_input_intent(raw_input: Dictionary) -> InputIntent:
 	var intent = InputIntent.new()
@@ -548,3 +603,16 @@ func set_player_number(num: int):
 		facing_dir = 1
 	else:
 		facing_dir = -1
+
+func configure_input_source(selected_input_mode: StringName, selected_device_id: int = -1) -> void:
+	input_mode = INPUT_MODE_CONTROLLER if selected_input_mode == INPUT_MODE_CONTROLLER else INPUT_MODE_KEYBOARD
+	controller_device_id = selected_device_id
+	previous_controller_down_held = false
+	previous_controller_jump_held = false
+	previous_controller_attack_held = false
+
+func configure_controller_bindings(jump_button: int, attack_button: int) -> void:
+	controller_jump_button = jump_button
+	controller_attack_button = attack_button
+	previous_controller_jump_held = false
+	previous_controller_attack_held = false

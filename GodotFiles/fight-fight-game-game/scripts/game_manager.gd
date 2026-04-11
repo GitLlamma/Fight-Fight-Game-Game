@@ -5,6 +5,11 @@ class_name GameManager
 const DEFAULT_CHARACTER_ID: StringName = &"default_fighter"
 const CHARACTER_PROFILE_PATH_TEMPLATE := "res://characters/%s.tres"
 const MATCH_SETUP_NODE_PATH := "/root/MatchSetup"
+const INPUT_MODE_KEYBOARD: StringName = &"keyboard"
+const INPUT_MODE_CONTROLLER: StringName = &"controller"
+const CONTROLLER_BINDING_JUMP: StringName = &"jump"
+const CONTROLLER_BINDING_ATTACK: StringName = &"attack"
+const CONTROLLER_DEVICE_AUTO_ID := -1
 
 signal player_won(player_number: int)
 signal health_changed(player_number: int, health: float, max_health: float)
@@ -39,11 +44,12 @@ func _spawn_match_players():
 	_despawn_player(player2)
 	player1 = null
 	player2 = null
+	var controller_assignments: Dictionary = _resolve_controller_device_assignments()
 
 	var player1_spawn: Node2D = get_node("Arena/PlayerSpawns/Player1Spawn")
 	var player2_spawn: Node2D = get_node("Arena/PlayerSpawns/Player2Spawn")
-	player1 = _spawn_player(1, "Player1", player1_spawn, player1_character_id)
-	player2 = _spawn_player(2, "Player2", player2_spawn, player2_character_id)
+	player1 = _spawn_player(1, "Player1", player1_spawn, player1_character_id, int(controller_assignments.get(1, -1)))
+	player2 = _spawn_player(2, "Player2", player2_spawn, player2_character_id, int(controller_assignments.get(2, -1)))
 
 	# Emit initial HUD values once numbers are assigned and HUD is connected.
 	if player1:
@@ -121,7 +127,7 @@ func _on_character_select_requested() -> void:
 	hud.hide_winner()
 	hud.show_character_select(_get_available_character_options(), player1_character_id, player2_character_id)
 
-func _spawn_player(player_number: int, node_name: String, spawn_marker: Node2D, character_id: StringName) -> Player:
+func _spawn_player(player_number: int, node_name: String, spawn_marker: Node2D, character_id: StringName, assigned_controller_device_id: int = -1) -> Player:
 	if player_scene == null:
 		push_error("GameManager.player_scene is not assigned")
 		return null
@@ -140,9 +146,70 @@ func _spawn_player(player_number: int, node_name: String, spawn_marker: Node2D, 
 	arena.add_child(player_instance)
 	player_instance.global_position = spawn_marker.global_position
 	player_instance.set_player_number(player_number)
+	var selected_input_mode: StringName = _get_player_input_mode(player_number)
+	var selected_device_id: int = assigned_controller_device_id
+	player_instance.configure_input_source(selected_input_mode, selected_device_id)
+	player_instance.configure_controller_bindings(
+		_get_controller_binding_for_player(player_number, CONTROLLER_BINDING_JUMP, JOY_BUTTON_A),
+		_get_controller_binding_for_player(player_number, CONTROLLER_BINDING_ATTACK, JOY_BUTTON_X)
+	)
 	player_instance.health_changed.connect(_on_player_health_changed)
 	player_instance.defeated.connect(on_player_defeated)
 	return player_instance
+
+func _resolve_controller_device_assignments() -> Dictionary:
+	var assignments := {
+		1: -1,
+		2: -1,
+	}
+	var connected_devices: PackedInt32Array = Input.get_connected_joypads()
+	var p1_mode: StringName = _get_player_input_mode(1)
+	var p2_mode: StringName = _get_player_input_mode(2)
+
+	assignments[1] = _resolve_controller_device_for_player(1, p1_mode, connected_devices, [])
+	assignments[2] = _resolve_controller_device_for_player(2, p2_mode, connected_devices, [int(assignments[1])])
+	return assignments
+
+func _resolve_controller_device_for_player(player_number: int, selected_input_mode: StringName, connected_devices: PackedInt32Array, reserved_devices: Array[int]) -> int:
+	if selected_input_mode != INPUT_MODE_CONTROLLER:
+		return -1
+	if connected_devices.is_empty():
+		return -1
+
+	var preferred_device_id: int = _get_preferred_controller_device_id(player_number)
+	if preferred_device_id != CONTROLLER_DEVICE_AUTO_ID and connected_devices.has(preferred_device_id) and not reserved_devices.has(preferred_device_id):
+		return preferred_device_id
+
+	var preferred_index: int = player_number - 1
+	if preferred_index >= 0 and preferred_index < connected_devices.size():
+		var preferred_index_device: int = connected_devices[preferred_index]
+		if not reserved_devices.has(preferred_index_device):
+			return preferred_index_device
+
+	for device_id in connected_devices:
+		if not reserved_devices.has(device_id):
+			return device_id
+
+	# If all connected devices are already reserved, intentionally share the first.
+	return connected_devices[0]
+
+func _get_player_input_mode(player_number: int) -> StringName:
+	var match_setup: Node = get_node_or_null(MATCH_SETUP_NODE_PATH)
+	if match_setup == null:
+		return INPUT_MODE_KEYBOARD
+	return match_setup.get_player_input_mode(player_number, INPUT_MODE_KEYBOARD)
+
+func _get_preferred_controller_device_id(player_number: int) -> int:
+	var match_setup: Node = get_node_or_null(MATCH_SETUP_NODE_PATH)
+	if match_setup == null:
+		return CONTROLLER_DEVICE_AUTO_ID
+	return int(match_setup.get_player_controller_device_id(player_number, CONTROLLER_DEVICE_AUTO_ID))
+
+func _get_controller_binding_for_player(player_number: int, binding_name: StringName, fallback_button: int) -> int:
+	var match_setup: Node = get_node_or_null(MATCH_SETUP_NODE_PATH)
+	if match_setup == null:
+		return fallback_button
+	return int(match_setup.get_player_controller_binding(player_number, binding_name, fallback_button))
 
 func _load_character_profile(character_id: StringName) -> CharacterData:
 	var requested_id: StringName = character_id if character_id != &"" else DEFAULT_CHARACTER_ID

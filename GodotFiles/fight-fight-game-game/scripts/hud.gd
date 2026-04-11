@@ -28,8 +28,12 @@ signal character_select_requested()
 @onready var controls_back_button = $ControlsScreen/ControlsContent/BackButton
 @onready var p1_keyboard_input_button = $ControlsScreen/ControlsContent/PlayerTabs/Player1Tab/P1InputModeRow/P1InputModeSwitch/KeyboardButton
 @onready var p1_controller_input_button = $ControlsScreen/ControlsContent/PlayerTabs/Player1Tab/P1InputModeRow/P1InputModeSwitch/ControllerButton
+@onready var p1_controller_status_label = $ControlsScreen/ControlsContent/PlayerTabs/Player1Tab/P1ControllerStatusLabel
+@onready var p1_controller_device_option = $ControlsScreen/ControlsContent/PlayerTabs/Player1Tab/P1ControllerDeviceRow/P1ControllerDeviceOption
 @onready var p2_keyboard_input_button = $ControlsScreen/ControlsContent/PlayerTabs/Player2Tab/P2InputModeRow/P2InputModeSwitch/KeyboardButton
 @onready var p2_controller_input_button = $ControlsScreen/ControlsContent/PlayerTabs/Player2Tab/P2InputModeRow/P2InputModeSwitch/ControllerButton
+@onready var p2_controller_status_label = $ControlsScreen/ControlsContent/PlayerTabs/Player2Tab/P2ControllerStatusLabel
+@onready var p2_controller_device_option = $ControlsScreen/ControlsContent/PlayerTabs/Player2Tab/P2ControllerDeviceRow/P2ControllerDeviceOption
 @onready var p1_left_button = $ControlsScreen/ControlsContent/PlayerTabs/Player1Tab/P1LeftRow/P1LeftButton
 @onready var p1_right_button = $ControlsScreen/ControlsContent/PlayerTabs/Player1Tab/P1RightRow/P1RightButton
 @onready var p1_up_button = $ControlsScreen/ControlsContent/PlayerTabs/Player1Tab/P1UpRow/P1UpButton
@@ -42,6 +46,7 @@ signal character_select_requested()
 @onready var p2_down_button = $ControlsScreen/ControlsContent/PlayerTabs/Player2Tab/P2DownRow/P2DownButton
 @onready var p2_jump_button = $ControlsScreen/ControlsContent/PlayerTabs/Player2Tab/P2JumpRow/P2JumpButton
 @onready var p2_attack_button = $ControlsScreen/ControlsContent/PlayerTabs/Player2Tab/P2AttackRow/P2AttackButton
+@onready var controller_assignment_warning_label = $ControlsScreen/ControlsContent/ControllerAssignmentWarningLabel
 
 var character_ids_by_index: Array[StringName] = []
 var character_options_by_id := {}
@@ -53,10 +58,25 @@ var p2_uses_controller := false
 var action_binding_buttons := {}
 var pending_rebind_action: StringName = &""
 var pending_rebind_button: Button = null
+var pending_rebind_mode: StringName = &""
+var pending_rebind_player_number := 0
 
 const CONTROLS_TAB_TITLE_P1_KEY := "UI_TAB_PLAYER_1"
 const CONTROLS_TAB_TITLE_P2_KEY := "UI_TAB_PLAYER_2"
 const REBIND_PROMPT_TEXT := "Press any key..."
+const REBIND_CONTROLLER_PROMPT_TEXT := "Press any controller button..."
+const MATCH_SETUP_NODE_PATH := "/root/MatchSetup"
+const INPUT_MODE_KEYBOARD: StringName = &"keyboard"
+const INPUT_MODE_CONTROLLER: StringName = &"controller"
+const REBIND_MODE_KEYBOARD: StringName = &"keyboard"
+const REBIND_MODE_CONTROLLER: StringName = &"controller"
+const CONTROLLER_BINDING_JUMP: StringName = &"jump"
+const CONTROLLER_BINDING_ATTACK: StringName = &"attack"
+const CONTROLLER_DEVICE_AUTO_ID := -1
+const CONTROLLER_DEVICE_AUTO_LABEL := "Auto (By Player Index)"
+const COLOR_STATUS_OK := Color(0.75, 0.95, 0.8, 1.0)
+const COLOR_STATUS_WARN := Color(0.98, 0.72, 0.72, 1.0)
+const COLOR_STATUS_NEUTRAL := Color(0.85, 0.85, 0.85, 1.0)
 const REQUIRED_REBIND_ACTIONS: Array[StringName] = [
 	&"ui_left_p1",
 	&"ui_right_p1",
@@ -91,13 +111,20 @@ func _ready():
 	p1_controller_input_button.pressed.connect(_on_p1_controller_input_button_pressed)
 	p2_keyboard_input_button.pressed.connect(_on_p2_keyboard_input_button_pressed)
 	p2_controller_input_button.pressed.connect(_on_p2_controller_input_button_pressed)
+	p1_controller_device_option.item_selected.connect(_on_p1_controller_device_option_selected)
+	p2_controller_device_option.item_selected.connect(_on_p2_controller_device_option_selected)
 	p1_character_option.item_selected.connect(_on_character_option_changed)
 	p2_character_option.item_selected.connect(_on_character_option_changed)
 	_initialize_control_binding_buttons()
+	_load_input_modes_from_match_setup()
 	_validate_required_rebind_actions()
 	_refresh_control_binding_button_texts()
 	_refresh_controls_tab_titles()
 	_refresh_input_mode_switch_visuals()
+	_refresh_controller_device_options()
+	_refresh_controller_connection_status_labels()
+	_refresh_controller_assignment_warning()
+	Input.joy_connection_changed.connect(_on_joy_connection_changed)
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_TRANSLATION_CHANGED and is_node_ready():
@@ -105,6 +132,22 @@ func _notification(what: int) -> void:
 
 func _input(event: InputEvent) -> void:
 	if pending_rebind_action == &"":
+		return
+
+	if event is InputEventJoypadButton and pending_rebind_mode == REBIND_MODE_CONTROLLER:
+		var joy_event := event as InputEventJoypadButton
+		if not joy_event.pressed:
+			get_viewport().set_input_as_handled()
+			return
+
+		if not _can_accept_controller_rebind_event(joy_event.device, pending_rebind_player_number):
+			get_viewport().set_input_as_handled()
+			return
+
+		_apply_controller_binding(_get_controller_binding_name_from_action(pending_rebind_action), joy_event.button_index, pending_rebind_player_number)
+		_clear_pending_rebind()
+		_refresh_control_binding_button_texts()
+		get_viewport().set_input_as_handled()
 		return
 
 	if event is InputEventKey:
@@ -117,6 +160,11 @@ func _input(event: InputEvent) -> void:
 
 		if key_event.keycode == KEY_ESCAPE:
 			_clear_pending_rebind()
+			get_viewport().set_input_as_handled()
+			return
+
+		if pending_rebind_mode == REBIND_MODE_CONTROLLER:
+			# Ignore non-escape keys while waiting for controller button input.
 			get_viewport().set_input_as_handled()
 			return
 
@@ -158,7 +206,10 @@ func show_controls_screen() -> void:
 	controls_screen.show()
 	controls_player_tabs.current_tab = 0
 	_clear_pending_rebind()
+	_refresh_controller_device_options()
 	_refresh_control_binding_button_texts()
+	_refresh_controller_connection_status_labels()
+	_refresh_controller_assignment_warning()
 	main_menu_background.hide()
 	main_menu_screen.hide()
 	character_select_background.hide()
@@ -290,6 +341,9 @@ func _validate_required_rebind_actions() -> void:
 			push_warning("Missing input action in project settings: %s" % String(action_name))
 
 func _on_control_binding_button_pressed(action_name: StringName) -> void:
+	var target_player_number: int = _get_player_number_from_action(action_name)
+	var should_use_controller_rebind: bool = _is_controller_binding_action(action_name) and _player_uses_controller(target_player_number)
+
 	if not InputMap.has_action(action_name):
 		push_warning("Cannot rebind missing action: %s" % String(action_name))
 		return
@@ -299,7 +353,9 @@ func _on_control_binding_button_pressed(action_name: StringName) -> void:
 
 	pending_rebind_action = action_name
 	pending_rebind_button = action_binding_buttons[action_name]
-	pending_rebind_button.text = REBIND_PROMPT_TEXT
+	pending_rebind_player_number = target_player_number
+	pending_rebind_mode = REBIND_MODE_CONTROLLER if should_use_controller_rebind else REBIND_MODE_KEYBOARD
+	pending_rebind_button.text = REBIND_CONTROLLER_PROMPT_TEXT if should_use_controller_rebind else REBIND_PROMPT_TEXT
 
 func _clear_pending_rebind() -> void:
 	if pending_rebind_action == &"":
@@ -307,15 +363,20 @@ func _clear_pending_rebind() -> void:
 
 	pending_rebind_action = &""
 	pending_rebind_button = null
+	pending_rebind_mode = &""
+	pending_rebind_player_number = 0
 	_refresh_control_binding_button_texts()
 
 func _refresh_control_binding_button_texts() -> void:
 	for action_name in action_binding_buttons.keys():
 		var button: Button = action_binding_buttons[action_name]
 		if action_name == pending_rebind_action:
-			button.text = REBIND_PROMPT_TEXT
+			button.text = REBIND_CONTROLLER_PROMPT_TEXT if pending_rebind_mode == REBIND_MODE_CONTROLLER else REBIND_PROMPT_TEXT
 		else:
-			button.text = _get_action_keyboard_binding_label(action_name)
+			if _should_show_controller_binding(action_name):
+				button.text = _get_action_controller_binding_label(action_name)
+			else:
+				button.text = _get_action_keyboard_binding_label(action_name)
 
 func _get_action_keyboard_binding_label(action_name: StringName) -> String:
 	var key_event := _get_first_keyboard_event(action_name)
@@ -348,27 +409,272 @@ func _apply_keyboard_binding(action_name: StringName, source_event: InputEventKe
 	remapped_event.physical_keycode = source_event.physical_keycode
 	InputMap.action_add_event(action_name, remapped_event)
 
+func _apply_controller_binding(binding_name: StringName, button_index: int, player_number: int) -> void:
+	if player_number != 1 and player_number != 2:
+		return
+
+	var match_setup: Node = get_node_or_null(MATCH_SETUP_NODE_PATH)
+	if match_setup == null:
+		return
+
+	match_setup.set_player_controller_binding(player_number, binding_name, button_index)
+
+func _get_action_controller_binding_label(action_name: StringName) -> String:
+	var player_number: int = _get_player_number_from_action(action_name)
+	var binding_name: StringName = _get_controller_binding_name_from_action(action_name)
+	if binding_name == &"":
+		return _get_action_keyboard_binding_label(action_name)
+
+	var match_setup: Node = get_node_or_null(MATCH_SETUP_NODE_PATH)
+	if match_setup == null:
+		return _get_action_keyboard_binding_label(action_name)
+
+	var button_index: int = int(match_setup.get_player_controller_binding(player_number, binding_name))
+	return _joy_button_to_label(button_index)
+
+func _joy_button_to_label(button_index: int) -> String:
+	if button_index == JOY_BUTTON_A:
+		return "A"
+	if button_index == JOY_BUTTON_B:
+		return "B"
+	if button_index == JOY_BUTTON_X:
+		return "X"
+	if button_index == JOY_BUTTON_Y:
+		return "Y"
+	if button_index == JOY_BUTTON_LEFT_SHOULDER:
+		return "LB"
+	if button_index == JOY_BUTTON_RIGHT_SHOULDER:
+		return "RB"
+	if button_index == JOY_BUTTON_BACK:
+		return "Back"
+	if button_index == JOY_BUTTON_START:
+		return "Start"
+	if button_index == JOY_BUTTON_DPAD_UP:
+		return "D-Pad Up"
+	if button_index == JOY_BUTTON_DPAD_DOWN:
+		return "D-Pad Down"
+	if button_index == JOY_BUTTON_DPAD_LEFT:
+		return "D-Pad Left"
+	if button_index == JOY_BUTTON_DPAD_RIGHT:
+		return "D-Pad Right"
+	return "Button %d" % button_index
+
+func _get_player_number_from_action(action_name: StringName) -> int:
+	var action_text: String = String(action_name)
+	if action_text.ends_with("_p2"):
+		return 2
+	return 1
+
+func _is_controller_binding_action(action_name: StringName) -> bool:
+	return action_name == &"jump_p1" or action_name == &"attack_p1" or action_name == &"jump_p2" or action_name == &"attack_p2"
+
+func _get_controller_binding_name_from_action(action_name: StringName) -> StringName:
+	if action_name == &"jump_p1" or action_name == &"jump_p2":
+		return CONTROLLER_BINDING_JUMP
+	if action_name == &"attack_p1" or action_name == &"attack_p2":
+		return CONTROLLER_BINDING_ATTACK
+	return &""
+
+func _player_uses_controller(player_number: int) -> bool:
+	if player_number == 2:
+		return p2_uses_controller
+	return p1_uses_controller
+
+func _should_show_controller_binding(action_name: StringName) -> bool:
+	if not _is_controller_binding_action(action_name):
+		return false
+	return _player_uses_controller(_get_player_number_from_action(action_name))
+
 func _on_p1_keyboard_input_button_pressed() -> void:
 	p1_uses_controller = false
+	_save_input_modes_to_match_setup()
+	_clear_pending_rebind()
 	_refresh_input_mode_switch_visuals()
+	_refresh_controller_connection_status_labels()
+	_refresh_controller_assignment_warning()
 
 func _on_p1_controller_input_button_pressed() -> void:
 	p1_uses_controller = true
+	_save_input_modes_to_match_setup()
+	_clear_pending_rebind()
 	_refresh_input_mode_switch_visuals()
+	_refresh_controller_connection_status_labels()
+	_refresh_controller_assignment_warning()
 
 func _on_p2_keyboard_input_button_pressed() -> void:
 	p2_uses_controller = false
+	_save_input_modes_to_match_setup()
+	_clear_pending_rebind()
 	_refresh_input_mode_switch_visuals()
+	_refresh_controller_connection_status_labels()
+	_refresh_controller_assignment_warning()
 
 func _on_p2_controller_input_button_pressed() -> void:
 	p2_uses_controller = true
+	_save_input_modes_to_match_setup()
+	_clear_pending_rebind()
 	_refresh_input_mode_switch_visuals()
+	_refresh_controller_connection_status_labels()
+	_refresh_controller_assignment_warning()
+
+func _load_input_modes_from_match_setup() -> void:
+	var match_setup: Node = get_node_or_null(MATCH_SETUP_NODE_PATH)
+	if match_setup == null:
+		return
+
+	p1_uses_controller = match_setup.get_player_input_mode(1, INPUT_MODE_KEYBOARD) == INPUT_MODE_CONTROLLER
+	p2_uses_controller = match_setup.get_player_input_mode(2, INPUT_MODE_KEYBOARD) == INPUT_MODE_CONTROLLER
+
+func _save_input_modes_to_match_setup() -> void:
+	var match_setup: Node = get_node_or_null(MATCH_SETUP_NODE_PATH)
+	if match_setup == null:
+		return
+
+	match_setup.set_player_input_mode(1, INPUT_MODE_CONTROLLER if p1_uses_controller else INPUT_MODE_KEYBOARD)
+	match_setup.set_player_input_mode(2, INPUT_MODE_CONTROLLER if p2_uses_controller else INPUT_MODE_KEYBOARD)
 
 func _refresh_input_mode_switch_visuals() -> void:
 	_set_switch_button_visual(p1_keyboard_input_button, not p1_uses_controller)
 	_set_switch_button_visual(p1_controller_input_button, p1_uses_controller)
 	_set_switch_button_visual(p2_keyboard_input_button, not p2_uses_controller)
 	_set_switch_button_visual(p2_controller_input_button, p2_uses_controller)
+	p1_controller_device_option.disabled = not p1_uses_controller
+	p2_controller_device_option.disabled = not p2_uses_controller
+
+func _refresh_controller_device_options() -> void:
+	_refresh_single_controller_device_option(p1_controller_device_option, 1)
+	_refresh_single_controller_device_option(p2_controller_device_option, 2)
+
+func _refresh_single_controller_device_option(option_button: OptionButton, player_number: int) -> void:
+	var selected_device_id: int = _get_saved_controller_device_id(player_number)
+	var connected_devices: PackedInt32Array = Input.get_connected_joypads()
+
+	option_button.set_block_signals(true)
+	option_button.clear()
+	option_button.add_item(CONTROLLER_DEVICE_AUTO_LABEL, CONTROLLER_DEVICE_AUTO_ID)
+	for device_id in connected_devices:
+		option_button.add_item(_build_controller_device_option_label(device_id), device_id)
+	_select_option_button_id(option_button, selected_device_id)
+	option_button.set_block_signals(false)
+
+func _build_controller_device_option_label(device_id: int) -> String:
+	var joy_name: String = Input.get_joy_name(device_id)
+	if joy_name.strip_edges().is_empty():
+		joy_name = "Unknown Controller"
+	return "%s (ID %d)" % [joy_name, device_id]
+
+func _select_option_button_id(option_button: OptionButton, target_id: int) -> void:
+	for item_index in option_button.item_count:
+		if option_button.get_item_id(item_index) == target_id:
+			option_button.select(item_index)
+			return
+	option_button.select(0)
+
+func _on_p1_controller_device_option_selected(index: int) -> void:
+	_set_saved_controller_device_id(1, p1_controller_device_option.get_item_id(index))
+	_refresh_controller_connection_status_labels()
+	_refresh_controller_assignment_warning()
+
+func _on_p2_controller_device_option_selected(index: int) -> void:
+	_set_saved_controller_device_id(2, p2_controller_device_option.get_item_id(index))
+	_refresh_controller_connection_status_labels()
+	_refresh_controller_assignment_warning()
+
+func _set_saved_controller_device_id(player_number: int, device_id: int) -> void:
+	var match_setup: Node = get_node_or_null(MATCH_SETUP_NODE_PATH)
+	if match_setup == null:
+		return
+	match_setup.set_player_controller_device_id(player_number, device_id)
+
+func _get_saved_controller_device_id(player_number: int) -> int:
+	var match_setup: Node = get_node_or_null(MATCH_SETUP_NODE_PATH)
+	if match_setup == null:
+		return CONTROLLER_DEVICE_AUTO_ID
+	return int(match_setup.get_player_controller_device_id(player_number, CONTROLLER_DEVICE_AUTO_ID))
+
+func _can_accept_controller_rebind_event(event_device_id: int, player_number: int) -> bool:
+	var selected_device_id: int = _get_saved_controller_device_id(player_number)
+	if selected_device_id == CONTROLLER_DEVICE_AUTO_ID:
+		return true
+	return event_device_id == selected_device_id
+
+func _refresh_controller_connection_status_labels() -> void:
+	var connected_devices: PackedInt32Array = Input.get_connected_joypads()
+	p1_controller_status_label.text = _build_controller_status_text(1, p1_uses_controller, connected_devices)
+	p2_controller_status_label.text = _build_controller_status_text(2, p2_uses_controller, connected_devices)
+	p1_controller_status_label.self_modulate = _build_controller_status_color(1, p1_uses_controller, connected_devices)
+	p2_controller_status_label.self_modulate = _build_controller_status_color(2, p2_uses_controller, connected_devices)
+
+func _build_controller_status_text(player_number: int, uses_controller: bool, connected_devices: PackedInt32Array) -> String:
+	var connected_count := connected_devices.size()
+	if connected_count <= 0:
+		if uses_controller:
+			return "P%d: Controller mode selected, but no controller is connected." % player_number
+		return "P%d: No controllers connected." % player_number
+
+	var selected_device_id: int = _get_saved_controller_device_id(player_number)
+	var resolved_device_id: int = _resolve_controller_device_for_player(player_number, connected_devices)
+
+	if uses_controller:
+		if resolved_device_id < 0:
+			return "P%d: Controller mode selected, but no usable controller is available." % player_number
+		if selected_device_id == CONTROLLER_DEVICE_AUTO_ID:
+			return "P%d: Auto device -> %s" % [player_number, _build_controller_device_option_label(resolved_device_id)]
+		if selected_device_id != resolved_device_id:
+			return "P%d: Selected device missing, fallback -> %s" % [player_number, _build_controller_device_option_label(resolved_device_id)]
+		return "P%d: Selected device -> %s" % [player_number, _build_controller_device_option_label(resolved_device_id)]
+	return "P%d: %d controller(s) connected (keyboard mode selected)." % [player_number, connected_count]
+
+func _build_controller_status_color(player_number: int, uses_controller: bool, connected_devices: PackedInt32Array) -> Color:
+	if uses_controller and _resolve_controller_device_for_player(player_number, connected_devices) < 0:
+		return COLOR_STATUS_WARN
+	if uses_controller:
+		return COLOR_STATUS_OK
+	return COLOR_STATUS_NEUTRAL
+
+func _resolve_controller_device_for_player(player_number: int, connected_devices: PackedInt32Array) -> int:
+	if connected_devices.is_empty():
+		return -1
+
+	var selected_device_id: int = _get_saved_controller_device_id(player_number)
+	if selected_device_id != CONTROLLER_DEVICE_AUTO_ID and connected_devices.has(selected_device_id):
+		return selected_device_id
+
+	var fallback_index: int = player_number - 1
+	if fallback_index >= 0 and fallback_index < connected_devices.size():
+		return connected_devices[fallback_index]
+
+	return connected_devices[0]
+
+func _on_joy_connection_changed(_device: int, _connected: bool) -> void:
+	_refresh_controller_device_options()
+	_refresh_controller_connection_status_labels()
+	_refresh_controller_assignment_warning()
+
+func _refresh_controller_assignment_warning() -> void:
+	if controller_assignment_warning_label == null:
+		return
+
+	if not p1_uses_controller or not p2_uses_controller:
+		controller_assignment_warning_label.hide()
+		return
+
+	var connected_devices: PackedInt32Array = Input.get_connected_joypads()
+	if connected_devices.size() < 2:
+		controller_assignment_warning_label.text = "Both players are in controller mode, but fewer than two controllers are connected."
+		controller_assignment_warning_label.self_modulate = COLOR_STATUS_WARN
+		controller_assignment_warning_label.show()
+		return
+
+	var p1_device: int = _resolve_controller_device_for_player(1, connected_devices)
+	var p2_device: int = _resolve_controller_device_for_player(2, connected_devices)
+	if p1_device >= 0 and p1_device == p2_device:
+		controller_assignment_warning_label.text = "Both players are currently mapped to the same controller. Pick different devices for fair input separation."
+		controller_assignment_warning_label.self_modulate = COLOR_STATUS_WARN
+		controller_assignment_warning_label.show()
+		return
+
+	controller_assignment_warning_label.hide()
 
 func _refresh_controls_tab_titles() -> void:
 	if controls_player_tabs == null or not is_instance_valid(controls_player_tabs):

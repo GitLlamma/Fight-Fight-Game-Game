@@ -136,10 +136,18 @@ Responsibilities:
 - full-screen placeholder background shown behind the character select screen
 - controls setup UI screen with separate Player 1 and Player 2 tabs
 - keyboard remapping for per-player actions (left, right, up, down, jump, attack) via click-then-press-key flow
-- controller input mode remains a visual placeholder and is not yet wired to gameplay input routing
+- controller mode now routes gameplay movement directions (left, right, up, down intent) from the assigned joypad
+- controller mode now also handles jump and attack with default face-button mappings
+- in controller mode, pressing Jump or Attack binding buttons captures the next controller button press for that player
+- controller jump/attack bindings persist per player in MatchSetup and are applied when spawning players
+- controls screen now includes per-player controller device selection (Auto or a specific connected device)
+- selected controller device preference persists per player in MatchSetup
+- if a selected controller is unavailable at match start, assignment falls back to deterministic auto selection
+- controls screen now shows per-player controller connection status using live joypad detection
+- controls screen now shows a warning when both players in controller mode could end up sharing a single controller
 - controls tab titles are set in script from translation keys to support future localization
 - full-screen placeholder background shown behind the controls screen
-- placeholder per-player segmented switch (Keyboard or Controller) with active/inactive visual state and no gameplay wiring yet
+- per-player segmented switch (Keyboard or Controller) with active/inactive visual state
 
 ### scripts/
 Stores the main GDScript gameplay logic.
@@ -168,6 +176,10 @@ Controls match flow.
 Responsibilities:
 - listens to HUD signals
 - reads selected characters from MatchSetup
+- reads selected input mode from MatchSetup and assigns a connected joypad for controller mode
+- reads persisted per-player controller jump/attack bindings from MatchSetup and applies them to spawned players
+- reads persisted per-player preferred controller device ID and honors it when available
+- resolves controller assignments once per match spawn and avoids duplicate device assignment when alternatives exist
 - spawns and despawns players
 - forwards health and winner events to the HUD
 
@@ -176,6 +188,8 @@ Controls the player character.
 
 Responsibilities:
 - movement and physics
+- supports controller-driven movement directions when controller mode is selected
+- supports controller-driven jump and attack with default button mappings when controller mode is selected
 - jump logic, double jump, and fast fall
 - attack input and move resolution
 - directional aerial attacks with placeholder hitboxes for up/down/forward/back input
@@ -197,6 +211,10 @@ Responsibilities:
 - shows the winner screen
 - handles rematch and character-select navigation
 - populates the character selection UI
+- handles keyboard key remapping for action bindings
+- handles controller button remapping for jump and attack when a player is set to controller mode
+- handles per-player controller device selection and persists it
+- surfaces controller assignment warnings for duplicate/insufficient connected controllers
 
 #### scripts/match_setup.gd
 Stores match setup state as an autoload singleton.
@@ -204,6 +222,9 @@ Stores match setup state as an autoload singleton.
 Responsibilities:
 - remembers selected character IDs
 - stores optional skin and loadout IDs
+- persists per-player input mode selection (keyboard/controller) from the controls menu
+- persists per-player controller jump and attack button bindings
+- persists per-player preferred controller device ID
 - provides defaults before the match starts
 
 #### scripts/input_handler.gd

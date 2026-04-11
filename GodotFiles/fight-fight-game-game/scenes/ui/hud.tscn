@@ -185,7 +185,7 @@ text = "Controls"
 horizontal_alignment = 1
 
 [node name="ControlsHintLabel" type="Label" parent="ControlsScreen/ControlsContent"]
-text = "Click a binding button, then press a keyboard key to remap. Controller mode is still placeholder-only."
+text = "Click a binding button, then press a keyboard key to remap. Controller mode now supports move, jump, and attack with default buttons."
 autowrap_mode = 3
 
 [node name="PlayerTabs" type="TabContainer" parent="ControlsScreen/ControlsContent"]
@@ -214,6 +214,20 @@ toggle_mode = true
 size_flags_horizontal = 3
 text = "Controller"
 toggle_mode = true
+
+[node name="P1ControllerStatusLabel" type="Label" parent="ControlsScreen/ControlsContent/PlayerTabs/Player1Tab"]
+text = "Controller status unknown."
+autowrap_mode = 3
+
+[node name="P1ControllerDeviceRow" type="HBoxContainer" parent="ControlsScreen/ControlsContent/PlayerTabs/Player1Tab"]
+theme_override_constants/separation = 12
+
+[node name="P1ControllerDeviceLabel" type="Label" parent="ControlsScreen/ControlsContent/PlayerTabs/Player1Tab/P1ControllerDeviceRow"]
+size_flags_horizontal = 3
+text = "Controller Device"
+
+[node name="P1ControllerDeviceOption" type="OptionButton" parent="ControlsScreen/ControlsContent/PlayerTabs/Player1Tab/P1ControllerDeviceRow"]
+size_flags_horizontal = 3
 
 [node name="P1LeftRow" type="HBoxContainer" parent="ControlsScreen/ControlsContent/PlayerTabs/Player1Tab"]
 theme_override_constants/separation = 12
@@ -305,6 +319,20 @@ size_flags_horizontal = 3
 text = "Controller"
 toggle_mode = true
 
+[node name="P2ControllerStatusLabel" type="Label" parent="ControlsScreen/ControlsContent/PlayerTabs/Player2Tab"]
+text = "Controller status unknown."
+autowrap_mode = 3
+
+[node name="P2ControllerDeviceRow" type="HBoxContainer" parent="ControlsScreen/ControlsContent/PlayerTabs/Player2Tab"]
+theme_override_constants/separation = 12
+
+[node name="P2ControllerDeviceLabel" type="Label" parent="ControlsScreen/ControlsContent/PlayerTabs/Player2Tab/P2ControllerDeviceRow"]
+size_flags_horizontal = 3
+text = "Controller Device"
+
+[node name="P2ControllerDeviceOption" type="OptionButton" parent="ControlsScreen/ControlsContent/PlayerTabs/Player2Tab/P2ControllerDeviceRow"]
+size_flags_horizontal = 3
+
 [node name="P2LeftRow" type="HBoxContainer" parent="ControlsScreen/ControlsContent/PlayerTabs/Player2Tab"]
 theme_override_constants/separation = 12
 
@@ -370,6 +398,11 @@ text = "Attack"
 [node name="P2AttackButton" type="Button" parent="ControlsScreen/ControlsContent/PlayerTabs/Player2Tab/P2AttackRow"]
 size_flags_horizontal = 3
 text = "P"
+
+[node name="ControllerAssignmentWarningLabel" type="Label" parent="ControlsScreen/ControlsContent"]
+visible = false
+text = "Controller assignment warning"
+autowrap_mode = 3
 
 [node name="BackButton" type="Button" parent="ControlsScreen/ControlsContent"]
 text = "Back"
