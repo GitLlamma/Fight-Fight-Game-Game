@@ -62,6 +62,10 @@ This includes:
 - input mappings
 - autoloads such as MatchSetup
 
+Control defaults source of truth:
+- Default input mappings are defined in `project.godot` under `[input]`.
+- Runtime controls UI reads and remaps existing `InputMap` actions, and warns if required actions are missing.
+
 Current default controls from the input map:
 - Player 1: `A/D` move, `W` aim up, `Space` jump, `T` attack
 - Player 2: `Left/Right` move, `Up Arrow` aim up, `O` jump, `P` attack
@@ -130,7 +134,9 @@ Responsibilities:
 - rematch and return-to-select buttons
 - character select interface with Start and Back navigation
 - full-screen placeholder background shown behind the character select screen
-- controls setup UI screen with separate Player 1 and Player 2 tabs (layout only, remapping logic pending)
+- controls setup UI screen with separate Player 1 and Player 2 tabs
+- keyboard remapping for per-player actions (left, right, up, down, jump, attack) via click-then-press-key flow
+- controller input mode remains a visual placeholder and is not yet wired to gameplay input routing
 - controls tab titles are set in script from translation keys to support future localization
 - full-screen placeholder background shown behind the controls screen
 - placeholder per-player segmented switch (Keyboard or Controller) with active/inactive visual state and no gameplay wiring yet

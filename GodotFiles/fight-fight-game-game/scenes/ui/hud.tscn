@@ -180,7 +180,7 @@ text = "Controls"
 horizontal_alignment = 1
 
 [node name="ControlsHintLabel" type="Label" parent="ControlsScreen/ControlsContent"]
-text = "UI only for now: remapping functionality will be added later."
+text = "Click a binding button, then press a keyboard key to remap. Controller mode is still placeholder-only."
 autowrap_mode = 3
 
 [node name="PlayerTabs" type="TabContainer" parent="ControlsScreen/ControlsContent"]
@@ -210,27 +210,49 @@ size_flags_horizontal = 3
 text = "Controller"
 toggle_mode = true
 
-[node name="P1MoveRow" type="HBoxContainer" parent="ControlsScreen/ControlsContent/PlayerTabs/Player1Tab"]
+[node name="P1LeftRow" type="HBoxContainer" parent="ControlsScreen/ControlsContent/PlayerTabs/Player1Tab"]
 theme_override_constants/separation = 12
 
-[node name="P1MoveLabel" type="Label" parent="ControlsScreen/ControlsContent/PlayerTabs/Player1Tab/P1MoveRow"]
+[node name="P1LeftLabel" type="Label" parent="ControlsScreen/ControlsContent/PlayerTabs/Player1Tab/P1LeftRow"]
 size_flags_horizontal = 3
-text = "Move Left / Right"
+text = "Move Left"
 
-[node name="P1MoveButton" type="Button" parent="ControlsScreen/ControlsContent/PlayerTabs/Player1Tab/P1MoveRow"]
+[node name="P1LeftButton" type="Button" parent="ControlsScreen/ControlsContent/PlayerTabs/Player1Tab/P1LeftRow"]
 size_flags_horizontal = 3
-text = "A / D"
+text = "A"
+
+[node name="P1RightRow" type="HBoxContainer" parent="ControlsScreen/ControlsContent/PlayerTabs/Player1Tab"]
+theme_override_constants/separation = 12
+
+[node name="P1RightLabel" type="Label" parent="ControlsScreen/ControlsContent/PlayerTabs/Player1Tab/P1RightRow"]
+size_flags_horizontal = 3
+text = "Move Right"
+
+[node name="P1RightButton" type="Button" parent="ControlsScreen/ControlsContent/PlayerTabs/Player1Tab/P1RightRow"]
+size_flags_horizontal = 3
+text = "D"
 
 [node name="P1UpRow" type="HBoxContainer" parent="ControlsScreen/ControlsContent/PlayerTabs/Player1Tab"]
 theme_override_constants/separation = 12
 
 [node name="P1UpLabel" type="Label" parent="ControlsScreen/ControlsContent/PlayerTabs/Player1Tab/P1UpRow"]
 size_flags_horizontal = 3
-text = "Aim Up"
+text = "Move Up"
 
 [node name="P1UpButton" type="Button" parent="ControlsScreen/ControlsContent/PlayerTabs/Player1Tab/P1UpRow"]
 size_flags_horizontal = 3
 text = "W"
+
+[node name="P1DownRow" type="HBoxContainer" parent="ControlsScreen/ControlsContent/PlayerTabs/Player1Tab"]
+theme_override_constants/separation = 12
+
+[node name="P1DownLabel" type="Label" parent="ControlsScreen/ControlsContent/PlayerTabs/Player1Tab/P1DownRow"]
+size_flags_horizontal = 3
+text = "Move Down"
+
+[node name="P1DownButton" type="Button" parent="ControlsScreen/ControlsContent/PlayerTabs/Player1Tab/P1DownRow"]
+size_flags_horizontal = 3
+text = "S"
 
 [node name="P1JumpRow" type="HBoxContainer" parent="ControlsScreen/ControlsContent/PlayerTabs/Player1Tab"]
 theme_override_constants/separation = 12
@@ -278,27 +300,49 @@ size_flags_horizontal = 3
 text = "Controller"
 toggle_mode = true
 
-[node name="P2MoveRow" type="HBoxContainer" parent="ControlsScreen/ControlsContent/PlayerTabs/Player2Tab"]
+[node name="P2LeftRow" type="HBoxContainer" parent="ControlsScreen/ControlsContent/PlayerTabs/Player2Tab"]
 theme_override_constants/separation = 12
 
-[node name="P2MoveLabel" type="Label" parent="ControlsScreen/ControlsContent/PlayerTabs/Player2Tab/P2MoveRow"]
+[node name="P2LeftLabel" type="Label" parent="ControlsScreen/ControlsContent/PlayerTabs/Player2Tab/P2LeftRow"]
 size_flags_horizontal = 3
-text = "Move Left / Right"
+text = "Move Left"
 
-[node name="P2MoveButton" type="Button" parent="ControlsScreen/ControlsContent/PlayerTabs/Player2Tab/P2MoveRow"]
+[node name="P2LeftButton" type="Button" parent="ControlsScreen/ControlsContent/PlayerTabs/Player2Tab/P2LeftRow"]
 size_flags_horizontal = 3
-text = "Left / Right"
+text = "Left"
+
+[node name="P2RightRow" type="HBoxContainer" parent="ControlsScreen/ControlsContent/PlayerTabs/Player2Tab"]
+theme_override_constants/separation = 12
+
+[node name="P2RightLabel" type="Label" parent="ControlsScreen/ControlsContent/PlayerTabs/Player2Tab/P2RightRow"]
+size_flags_horizontal = 3
+text = "Move Right"
+
+[node name="P2RightButton" type="Button" parent="ControlsScreen/ControlsContent/PlayerTabs/Player2Tab/P2RightRow"]
+size_flags_horizontal = 3
+text = "Right"
 
 [node name="P2UpRow" type="HBoxContainer" parent="ControlsScreen/ControlsContent/PlayerTabs/Player2Tab"]
 theme_override_constants/separation = 12
 
 [node name="P2UpLabel" type="Label" parent="ControlsScreen/ControlsContent/PlayerTabs/Player2Tab/P2UpRow"]
 size_flags_horizontal = 3
-text = "Aim Up"
+text = "Move Up"
 
 [node name="P2UpButton" type="Button" parent="ControlsScreen/ControlsContent/PlayerTabs/Player2Tab/P2UpRow"]
 size_flags_horizontal = 3
 text = "Up Arrow"
+
+[node name="P2DownRow" type="HBoxContainer" parent="ControlsScreen/ControlsContent/PlayerTabs/Player2Tab"]
+theme_override_constants/separation = 12
+
+[node name="P2DownLabel" type="Label" parent="ControlsScreen/ControlsContent/PlayerTabs/Player2Tab/P2DownRow"]
+size_flags_horizontal = 3
+text = "Move Down"
+
+[node name="P2DownButton" type="Button" parent="ControlsScreen/ControlsContent/PlayerTabs/Player2Tab/P2DownRow"]
+size_flags_horizontal = 3
+text = "Down"
 
 [node name="P2JumpRow" type="HBoxContainer" parent="ControlsScreen/ControlsContent/PlayerTabs/Player2Tab"]
 theme_override_constants/separation = 12
