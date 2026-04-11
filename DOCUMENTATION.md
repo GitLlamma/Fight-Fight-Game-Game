@@ -146,12 +146,9 @@ Responsibilities:
 - in controller mode, movement rows are fixed to Left Stick/D-Pad directions while jump/attack rows show remappable controller button bindings
 - in controller mode, pressing Jump or Attack binding buttons captures the next controller button press for that player
 - controller jump/attack bindings persist per player in MatchSetup and are applied when spawning players
-- controls screen now includes per-player controller device selection (Auto or a specific connected device)
-- selected controller device preference persists per player in MatchSetup
-- if a selected controller is unavailable at match start, assignment falls back to deterministic auto selection
-- controls screen now shows per-player controller connection status using live joypad detection
-- controls screen now shows a warning when both players in controller mode could end up sharing a single controller
-- character select now blocks Start Match when both players in controller mode do not resolve to separate connected controllers
+- match start now validates Character Select controller joins directly and blocks if a controller-mode player has not joined or if their joined device is disconnected
+- controls screen warns when both players are in controller mode but fewer than two controllers are connected
+- character select now blocks Start Match when controller-mode players have not joined with connected devices or when both players share the same controller device
 - gameplay now pauses on controller disconnect and shows a reconnect prompt until controller input is recovered
 - menus now support controller navigation (left stick and D-pad), confirmation (A), and back/cancel (B)
 - when a controller is connected, Main Menu defaults focus to Start and shows it in a selected visual state
@@ -161,6 +158,8 @@ Responsibilities:
 - mouse ownership is explicit in Character Select via P1/P2 owner toggle buttons; mouse clicks on grid tiles assign to the selected owner
 - in Character Select, controllers join per player slot by pressing any button on an inactive controller (currently supports 2 slots, architecture is map-based for future expansion)
 - each active controller gets an independent non-wrapping cursor on the grid; D-pad/left stick move the cursor within bounds, A locks selection, B unlocks selection
+- when a player is in controller mode, match start validation now requires that player to join Character Select with a connected controller
+- when match start is triggered, Character Select's joined controller device IDs are persisted into MatchSetup and used by gameplay spawn assignment
 - grid tiles visually show per-player cursor/lock state using color highlights only (no per-tile marker text)
 - character grid tiles are non-focusable in UI navigation to avoid persistent focus outlines; selection state is communicated only through custom color/status visuals
 - character grid tiles use a consistent stylebox footprint with a transparent baseline outline so controller wake/state changes do not cause per-tile size jitter
@@ -178,6 +177,7 @@ Responsibilities:
 - Match Setup (Character Select) now uses a responsive 90% viewport panel layout
 - join/lock status panels use a tall portrait-style ratio (~3:2 height-to-width), with player text bottom-centered for future fighter portrait visuals
 - Character Select hint text updates dynamically: it shows "CHOOSE YOUR CHARACTER" by default and switches to "PRESS START/ENTER" only after both players have explicitly selected fighters
+- Character Select no longer shows an inline "cannot start" warning label; unavailable start states are represented by selector/hint state and blocked start input
 - when a controller joins Character Select, the first button press only wakes/assigns that selector and does not perform movement or lock actions
 - joystick motion past deadzone can also wake/assign a controller selector, and that wake motion does not perform cursor movement
 - newly awakened selectors start hovering on Default Fighter in an unlocked state, and idle tiles are visually dimmed to avoid implying pre-selection
@@ -219,7 +219,7 @@ Responsibilities:
 - reads selected characters from MatchSetup
 - reads selected input mode from MatchSetup and assigns a connected joypad for controller mode
 - reads persisted per-player controller jump/attack bindings from MatchSetup and applies them to spawned players
-- reads persisted per-player preferred controller device ID and honors it when available
+- reads Character Select-persisted controller device IDs from MatchSetup at match start
 - resolves controller assignments once per match spawn and avoids duplicate device assignment when alternatives exist
 - listens for controller connection changes during live matches and pauses/resumes around controller recovery
 - spawns and despawns players
@@ -255,9 +255,9 @@ Responsibilities:
 - populates the character selection UI
 - handles keyboard key remapping for action bindings
 - handles controller button remapping for jump and attack when a player is set to controller mode
-- handles per-player controller device selection and persists it
-- surfaces controller assignment warnings for duplicate/insufficient connected controllers
-- enforces controller assignment validity before starting a match
+- surfaces a controls-screen warning when both players are set to controller mode but fewer than two controllers are connected
+- enforces controller assignment validity before starting a match based on Character Select join assignments
+- persists Character Select controller assignments into MatchSetup right before match start
 - shows an in-match reconnect overlay while waiting for controller recovery after disconnect
 
 #### scripts/match_setup.gd
@@ -268,7 +268,7 @@ Responsibilities:
 - stores optional skin and loadout IDs
 - persists per-player input mode selection (keyboard/controller) from the controls menu
 - persists per-player controller jump and attack button bindings
-- persists per-player preferred controller device ID
+- persists per-player controller device ID (authored by Character Select controller joins at match start)
 - provides defaults before the match starts
 
 #### scripts/input_handler.gd

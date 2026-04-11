@@ -176,11 +176,6 @@ text = "CHOOSE YOUR CHARACTER"
 horizontal_alignment = 1
 autowrap_mode = 3
 
-[node name="StartWarningLabel" type="Label" parent="CharacterSelectScreen/SelectContent"]
-visible = false
-text = "Controller assignment warning"
-autowrap_mode = 3
-
 [node name="BackToMainMenuButton" type="Button" parent="CharacterSelectBackground"]
 offset_left = 10.0
 offset_top = 10.0
@@ -258,20 +253,6 @@ toggle_mode = true
 size_flags_horizontal = 3
 text = "Controller"
 toggle_mode = true
-
-[node name="P1ControllerStatusLabel" type="Label" parent="ControlsScreen/ControlsContent/PlayerTabs/Player1Tab"]
-text = "Controller status unknown."
-autowrap_mode = 3
-
-[node name="P1ControllerDeviceRow" type="HBoxContainer" parent="ControlsScreen/ControlsContent/PlayerTabs/Player1Tab"]
-theme_override_constants/separation = 12
-
-[node name="P1ControllerDeviceLabel" type="Label" parent="ControlsScreen/ControlsContent/PlayerTabs/Player1Tab/P1ControllerDeviceRow"]
-size_flags_horizontal = 3
-text = "Controller Device"
-
-[node name="P1ControllerDeviceOption" type="OptionButton" parent="ControlsScreen/ControlsContent/PlayerTabs/Player1Tab/P1ControllerDeviceRow"]
-size_flags_horizontal = 3
 
 [node name="P1LeftRow" type="HBoxContainer" parent="ControlsScreen/ControlsContent/PlayerTabs/Player1Tab"]
 theme_override_constants/separation = 12
@@ -362,20 +343,6 @@ toggle_mode = true
 size_flags_horizontal = 3
 text = "Controller"
 toggle_mode = true
-
-[node name="P2ControllerStatusLabel" type="Label" parent="ControlsScreen/ControlsContent/PlayerTabs/Player2Tab"]
-text = "Controller status unknown."
-autowrap_mode = 3
-
-[node name="P2ControllerDeviceRow" type="HBoxContainer" parent="ControlsScreen/ControlsContent/PlayerTabs/Player2Tab"]
-theme_override_constants/separation = 12
-
-[node name="P2ControllerDeviceLabel" type="Label" parent="ControlsScreen/ControlsContent/PlayerTabs/Player2Tab/P2ControllerDeviceRow"]
-size_flags_horizontal = 3
-text = "Controller Device"
-
-[node name="P2ControllerDeviceOption" type="OptionButton" parent="ControlsScreen/ControlsContent/PlayerTabs/Player2Tab/P2ControllerDeviceRow"]
-size_flags_horizontal = 3
 
 [node name="P2LeftRow" type="HBoxContainer" parent="ControlsScreen/ControlsContent/PlayerTabs/Player2Tab"]
 theme_override_constants/separation = 12
