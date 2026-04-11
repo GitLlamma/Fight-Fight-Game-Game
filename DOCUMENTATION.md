@@ -171,6 +171,7 @@ Responsibilities:
 - lock status panels show: "Press any button to join" when inactive and "P1 <fighter name>" / "P2 <fighter name>" when active; lock state is indicated by panel color (red P1, blue P2)
 - lock panel colors are tuned for high contrast (dark neutral when unlocked, saturated red/blue when locked) to make selection state immediately visible
 - lock panel color contrast is enforced with explicit panel stylebox backgrounds/borders (not just modulation tint), improving visibility across theme variations
+- lock panel visuals cache prebuilt styleboxes per player/state and only swap overrides on lock-state transitions, reducing allocation and UI churn during frequent refreshes
 - lock panels display the currently hovered fighter name for active players, and play a slight pulse animation when lock-in happens
 - when a player locks in a fighter, that player's cursor highlight is removed from the grid; pressing B restores the cursor at their previously selected fighter
 - Character Select layout was compacted after stat/status removals: core rows are centered and the character grid now claims the main vertical space to avoid large empty gaps

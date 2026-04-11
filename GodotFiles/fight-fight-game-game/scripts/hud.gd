@@ -85,6 +85,11 @@ var character_select_prev_locked_state := {
 	2: false,
 }
 var character_select_lock_pulse_tweens := {}
+var character_select_lock_panel_style_cache := {}
+var character_select_lock_panel_applied_state := {
+	1: null,
+	2: null,
+}
 
 const CONTROLS_TAB_TITLE_P1_KEY := "UI_TAB_PLAYER_1"
 const CONTROLS_TAB_TITLE_P2_KEY := "UI_TAB_PLAYER_2"
@@ -167,6 +172,7 @@ func _ready():
 	main_menu_controls_button.focus_exited.connect(_refresh_main_menu_button_selection_visuals)
 	mouse_owner_p1_button.focus_mode = Control.FOCUS_NONE
 	mouse_owner_p2_button.focus_mode = Control.FOCUS_NONE
+	_initialize_lock_panel_style_cache()
 	_initialize_control_binding_buttons()
 	_load_input_modes_from_match_setup()
 	_validate_required_rebind_actions()
@@ -810,8 +816,8 @@ func _refresh_lock_status_panels() -> void:
 	else:
 		p2_lock_label.text = "P2 %s" % p2_name
 
-	_apply_lock_panel_visual(p1_lock_panel, p1_lock_label, p1_locked, PLAYER_LOCK_COLOR_P1)
-	_apply_lock_panel_visual(p2_lock_panel, p2_lock_label, p2_locked, PLAYER_LOCK_COLOR_P2)
+	_apply_lock_panel_visual(1, p1_lock_panel, p1_lock_label, p1_locked)
+	_apply_lock_panel_visual(2, p2_lock_panel, p2_lock_label, p2_locked)
 
 	if p1_locked and not bool(character_select_prev_locked_state.get(1, false)):
 		_play_lock_panel_pulse(1, p1_lock_panel)
@@ -821,22 +827,46 @@ func _refresh_lock_status_panels() -> void:
 	character_select_prev_locked_state[1] = p1_locked
 	character_select_prev_locked_state[2] = p2_locked
 
-func _apply_lock_panel_visual(panel: PanelContainer, label: Label, locked: bool, locked_color: Color) -> void:
-	if panel == null or label == null:
-		return
+func _initialize_lock_panel_style_cache() -> void:
+	character_select_lock_panel_style_cache = {
+		1: {
+			"locked": _build_lock_panel_stylebox(PLAYER_LOCK_COLOR_P1, PLAYER_LOCK_COLOR_P1.darkened(0.35)),
+			"unlocked": _build_lock_panel_stylebox(PLAYER_LOCK_PANEL_IDLE_COLOR, PLAYER_LOCK_PANEL_IDLE_BORDER_COLOR),
+		},
+		2: {
+			"locked": _build_lock_panel_stylebox(PLAYER_LOCK_COLOR_P2, PLAYER_LOCK_COLOR_P2.darkened(0.35)),
+			"unlocked": _build_lock_panel_stylebox(PLAYER_LOCK_PANEL_IDLE_COLOR, PLAYER_LOCK_PANEL_IDLE_BORDER_COLOR),
+		},
+	}
+	character_select_lock_panel_applied_state[1] = null
+	character_select_lock_panel_applied_state[2] = null
 
+func _build_lock_panel_stylebox(bg_color: Color, border_color: Color) -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()
-	style.bg_color = locked_color if locked else PLAYER_LOCK_PANEL_IDLE_COLOR
+	style.bg_color = bg_color
 	style.border_width_left = 2
 	style.border_width_top = 2
 	style.border_width_right = 2
 	style.border_width_bottom = 2
-	style.border_color = locked_color.darkened(0.35) if locked else PLAYER_LOCK_PANEL_IDLE_BORDER_COLOR
+	style.border_color = border_color
 	style.corner_radius_top_left = 6
 	style.corner_radius_top_right = 6
 	style.corner_radius_bottom_right = 6
 	style.corner_radius_bottom_left = 6
-	panel.add_theme_stylebox_override("panel", style)
+	return style
+
+func _apply_lock_panel_visual(player_number: int, panel: PanelContainer, label: Label, locked: bool) -> void:
+	if panel == null or label == null:
+		return
+
+	var previous_locked_state = character_select_lock_panel_applied_state.get(player_number, null)
+	if previous_locked_state == null or bool(previous_locked_state) != locked:
+		var styles_for_player: Dictionary = character_select_lock_panel_style_cache.get(player_number, {})
+		var style_key := "locked" if locked else "unlocked"
+		var style: StyleBoxFlat = styles_for_player.get(style_key, null)
+		if style != null:
+			panel.add_theme_stylebox_override("panel", style)
+		character_select_lock_panel_applied_state[player_number] = locked
 
 	label.self_modulate = PLAYER_LOCK_PANEL_TEXT_COLOR
 
