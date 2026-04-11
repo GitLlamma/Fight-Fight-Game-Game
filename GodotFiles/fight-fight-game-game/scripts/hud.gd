@@ -354,6 +354,7 @@ func _validate_required_rebind_actions() -> void:
 func _on_control_binding_button_pressed(action_name: StringName) -> void:
 	var target_player_number: int = _get_player_number_from_action(action_name)
 	var should_use_controller_rebind: bool = _is_controller_binding_action(action_name) and _player_uses_controller(target_player_number)
+	var player_uses_controller: bool = _player_uses_controller(target_player_number)
 
 	if not InputMap.has_action(action_name):
 		push_warning("Cannot rebind missing action: %s" % String(action_name))
@@ -361,6 +362,10 @@ func _on_control_binding_button_pressed(action_name: StringName) -> void:
 
 	if pending_rebind_action != &"" and pending_rebind_action != action_name:
 		_clear_pending_rebind()
+
+	if player_uses_controller and not _is_controller_binding_action(action_name):
+		# Movement directions are fixed to stick/D-pad in controller mode.
+		return
 
 	pending_rebind_action = action_name
 	pending_rebind_button = action_binding_buttons[action_name]
@@ -431,6 +436,15 @@ func _apply_controller_binding(binding_name: StringName, button_index: int, play
 	match_setup.set_player_controller_binding(player_number, binding_name, button_index)
 
 func _get_action_controller_binding_label(action_name: StringName) -> String:
+	if action_name == &"ui_left_p1" or action_name == &"ui_left_p2":
+		return "Left Stick Left / D-Pad Left"
+	if action_name == &"ui_right_p1" or action_name == &"ui_right_p2":
+		return "Left Stick Right / D-Pad Right"
+	if action_name == &"ui_up_p1" or action_name == &"ui_up_p2":
+		return "Left Stick Up / D-Pad Up"
+	if action_name == &"ui_down_p1" or action_name == &"ui_down_p2":
+		return "Left Stick Down / D-Pad Down"
+
 	var player_number: int = _get_player_number_from_action(action_name)
 	var binding_name: StringName = _get_controller_binding_name_from_action(action_name)
 	if binding_name == &"":
@@ -492,8 +506,6 @@ func _player_uses_controller(player_number: int) -> bool:
 	return p1_uses_controller
 
 func _should_show_controller_binding(action_name: StringName) -> bool:
-	if not _is_controller_binding_action(action_name):
-		return false
 	return _player_uses_controller(_get_player_number_from_action(action_name))
 
 func _on_p1_keyboard_input_button_pressed() -> void:
@@ -501,6 +513,7 @@ func _on_p1_keyboard_input_button_pressed() -> void:
 	_save_input_modes_to_match_setup()
 	_clear_pending_rebind()
 	_refresh_input_mode_switch_visuals()
+	_refresh_control_binding_button_texts()
 	_refresh_controller_connection_status_labels()
 	_refresh_controller_assignment_warning()
 
@@ -509,6 +522,7 @@ func _on_p1_controller_input_button_pressed() -> void:
 	_save_input_modes_to_match_setup()
 	_clear_pending_rebind()
 	_refresh_input_mode_switch_visuals()
+	_refresh_control_binding_button_texts()
 	_refresh_controller_connection_status_labels()
 	_refresh_controller_assignment_warning()
 
@@ -517,6 +531,7 @@ func _on_p2_keyboard_input_button_pressed() -> void:
 	_save_input_modes_to_match_setup()
 	_clear_pending_rebind()
 	_refresh_input_mode_switch_visuals()
+	_refresh_control_binding_button_texts()
 	_refresh_controller_connection_status_labels()
 	_refresh_controller_assignment_warning()
 
@@ -525,6 +540,7 @@ func _on_p2_controller_input_button_pressed() -> void:
 	_save_input_modes_to_match_setup()
 	_clear_pending_rebind()
 	_refresh_input_mode_switch_visuals()
+	_refresh_control_binding_button_texts()
 	_refresh_controller_connection_status_labels()
 	_refresh_controller_assignment_warning()
 

@@ -190,7 +190,7 @@ text = "Controls"
 horizontal_alignment = 1
 
 [node name="ControlsHintLabel" type="Label" parent="ControlsScreen/ControlsContent"]
-text = "Click a binding button, then press a keyboard key to remap. Controller mode now supports move, jump, and attack with default buttons."
+text = "Click a binding button, then press a keyboard key to remap. In controller mode, movement uses Left Stick/D-Pad and Jump/Attack use controller mappings."
 autowrap_mode = 3
 
 [node name="PlayerTabs" type="TabContainer" parent="ControlsScreen/ControlsContent"]

@@ -138,6 +138,8 @@ Responsibilities:
 - keyboard remapping for per-player actions (left, right, up, down, jump, attack) via click-then-press-key flow
 - controller mode now routes gameplay movement directions (left, right, up, down intent) from the assigned joypad
 - controller mode now also handles jump and attack with default face-button mappings
+- when controller mode is selected for a player, controls UI shows controller mappings instead of keyboard keys for that player's rows
+- in controller mode, movement rows are fixed to Left Stick/D-Pad directions while jump/attack rows show remappable controller button bindings
 - in controller mode, pressing Jump or Attack binding buttons captures the next controller button press for that player
 - controller jump/attack bindings persist per player in MatchSetup and are applied when spawning players
 - controls screen now includes per-player controller device selection (Auto or a specific connected device)
