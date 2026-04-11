@@ -14,6 +14,7 @@ signal character_select_requested()
 @onready var win_label = $WinScreen/WinContent/WinLabel
 @onready var rematch_button = $WinScreen/WinContent/RematchButton
 @onready var back_to_select_button = $WinScreen/WinContent/BackToSelectButton
+@onready var character_select_background = $CharacterSelectBackground
 @onready var character_select_screen = $CharacterSelectScreen
 @onready var select_scroll = $CharacterSelectScreen/SelectScroll
 @onready var p1_character_option = $CharacterSelectScreen/SelectScroll/SelectContent/P1Row/P1CharacterOption
@@ -36,6 +37,7 @@ func _ready():
 	main_menu_background.hide()
 	main_menu_screen.hide()
 	win_screen.hide()
+	character_select_background.hide()
 	character_select_screen.hide()
 	controls_background.hide()
 	controls_screen.hide()
@@ -67,6 +69,7 @@ func show_main_menu(character_options: Array, default_p1: StringName, default_p2
 	cache_character_select_data(character_options, default_p1, default_p2)
 	main_menu_background.show()
 	main_menu_screen.show()
+	character_select_background.hide()
 	controls_background.hide()
 	controls_screen.hide()
 	character_select_screen.hide()
@@ -81,6 +84,7 @@ func show_controls_screen() -> void:
 	controls_screen.show()
 	main_menu_background.hide()
 	main_menu_screen.hide()
+	character_select_background.hide()
 	character_select_screen.hide()
 	hide_winner()
 
@@ -97,6 +101,7 @@ func show_character_select(character_options: Array, default_p1: StringName, def
 	cache_character_select_data(character_options, default_p1, default_p2)
 	main_menu_background.hide()
 	main_menu_screen.hide()
+	character_select_background.show()
 	controls_background.hide()
 	controls_screen.hide()
 	character_select_screen.show()
@@ -105,6 +110,7 @@ func show_character_select(character_options: Array, default_p1: StringName, def
 	_populate_character_options(character_options, default_p1, default_p2)
 
 func hide_character_select() -> void:
+	character_select_background.hide()
 	character_select_screen.hide()
 
 func _populate_character_options(character_options: Array, default_p1: StringName, default_p2: StringName) -> void:

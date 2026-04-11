@@ -80,6 +80,13 @@ text = "Rematch"
 [node name="BackToSelectButton" type="Button" parent="WinScreen/WinContent"]
 text = "Back To Character Select"
 
+[node name="CharacterSelectBackground" type="ColorRect" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_right = 0.0
+offset_bottom = 0.0
+color = Color(0.08, 0.14, 0.1, 1)
+
 [node name="CharacterSelectScreen" type="PanelContainer" parent="."]
 anchor_left = 0.5
 anchor_top = 0.5

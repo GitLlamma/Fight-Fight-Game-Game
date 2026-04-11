@@ -129,6 +129,7 @@ Responsibilities:
 - win screen
 - rematch and return-to-select buttons
 - character select interface with Start and Back navigation
+- full-screen placeholder background shown behind the character select screen
 - controls setup UI screen (layout only, remapping logic pending)
 - full-screen placeholder background shown behind the controls screen
 
