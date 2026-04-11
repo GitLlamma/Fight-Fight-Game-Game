@@ -79,6 +79,11 @@ var mouse_owner_player_number := 1
 var character_select_player_state := {}
 var character_select_device_to_player := {}
 var character_select_axis_hold_by_device := {}
+var character_select_prev_locked_state := {
+	1: false,
+	2: false,
+}
+var character_select_lock_pulse_tweens := {}
 
 const CONTROLS_TAB_TITLE_P1_KEY := "UI_TAB_PLAYER_1"
 const CONTROLS_TAB_TITLE_P2_KEY := "UI_TAB_PLAYER_2"
@@ -490,6 +495,8 @@ func _reset_character_select_player_state() -> void:
 	character_select_player_state.clear()
 	character_select_device_to_player.clear()
 	character_select_axis_hold_by_device.clear()
+	character_select_prev_locked_state[1] = false
+	character_select_prev_locked_state[2] = false
 	for player_number in PLAYER_SLOT_IDS:
 		character_select_player_state[player_number] = {
 			"active": false,
@@ -658,6 +665,7 @@ func _set_character_select_cursor_index(player_number: int, cursor_index: int) -
 	var clamped_index := clampi(cursor_index, 0, character_ids_by_index.size() - 1)
 	state["cursor_index"] = clamped_index
 	character_select_player_state[player_number] = state
+	_refresh_lock_status_panels()
 	_refresh_character_grid_visuals()
 
 func _set_character_select_locked(player_number: int, locked: bool) -> void:
@@ -693,6 +701,7 @@ func _move_character_select_cursor(player_number: int, move_x: int, move_y: int)
 
 	state["cursor_index"] = target_index
 	character_select_player_state[player_number] = state
+	_refresh_lock_status_panels()
 	_refresh_character_grid_visuals()
 
 func _lock_character_select_choice(player_number: int) -> void:
@@ -778,6 +787,14 @@ func _refresh_lock_status_panels() -> void:
 	_apply_lock_panel_visual(p1_lock_panel, p1_lock_label, p1_locked, PLAYER_LOCK_COLOR_P1)
 	_apply_lock_panel_visual(p2_lock_panel, p2_lock_label, p2_locked, PLAYER_LOCK_COLOR_P2)
 
+	if p1_locked and not bool(character_select_prev_locked_state.get(1, false)):
+		_play_lock_panel_pulse(1, p1_lock_panel)
+	if p2_locked and not bool(character_select_prev_locked_state.get(2, false)):
+		_play_lock_panel_pulse(2, p2_lock_panel)
+
+	character_select_prev_locked_state[1] = p1_locked
+	character_select_prev_locked_state[2] = p2_locked
+
 func _apply_lock_panel_visual(panel: PanelContainer, label: Label, locked: bool, locked_color: Color) -> void:
 	if panel == null or label == null:
 		return
@@ -796,6 +813,22 @@ func _apply_lock_panel_visual(panel: PanelContainer, label: Label, locked: bool,
 	panel.add_theme_stylebox_override("panel", style)
 
 	label.self_modulate = PLAYER_LOCK_PANEL_TEXT_COLOR
+
+func _play_lock_panel_pulse(player_number: int, panel: PanelContainer) -> void:
+	if panel == null:
+		return
+
+	var existing_tween: Tween = character_select_lock_pulse_tweens.get(player_number, null)
+	if existing_tween != null:
+		existing_tween.kill()
+
+	# Scale around panel center so pulse expands evenly in all directions.
+	panel.pivot_offset = panel.size * 0.5
+	panel.scale = Vector2.ONE
+	var tween := create_tween()
+	tween.tween_property(panel, "scale", Vector2(1.05, 1.05), 0.08)
+	tween.tween_property(panel, "scale", Vector2.ONE, 0.1)
+	character_select_lock_pulse_tweens[player_number] = tween
 
 func _get_character_name_for_index(index: int) -> String:
 	if index < 0 or index >= character_ids_by_index.size():

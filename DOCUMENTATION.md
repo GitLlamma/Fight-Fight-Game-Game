@@ -168,9 +168,10 @@ Responsibilities:
 - Character Select status/lock labels use fixed-size containers and clipped text to prevent UI stretching/squishing when state text changes
 - Character stat preview UI and related update logic were removed from Character Select to reduce visual clutter; selection feedback is provided by grid highlights and lock status panels
 - top Player 1 / Player 2 status labels were removed from Character Select; all selector state messaging now lives in the two lock status panels
-- lock status panels show: "Press any button to join" when inactive and "P1/P2 <fighter name>" when active; lock state is indicated by panel color (red P1, blue P2)
+- lock status panels show: "Press any button to join" when inactive and "P1 <fighter name>" / "P2 <fighter name>" when active; lock state is indicated by panel color (red P1, blue P2)
 - lock panel colors are tuned for high contrast (dark neutral when unlocked, saturated red/blue when locked) to make selection state immediately visible
 - lock panel color contrast is enforced with explicit panel stylebox backgrounds/borders (not just modulation tint), improving visibility across theme variations
+- lock panels display the currently hovered fighter name for active players, and play a slight pulse animation when lock-in happens
 - when a player locks in a fighter, that player's cursor highlight is removed from the grid; pressing B restores the cursor at their previously selected fighter
 - when a controller joins Character Select, the first button press only wakes/assigns that selector and does not perform movement or lock actions
 - joystick motion past deadzone can also wake/assign a controller selector, and that wake motion does not perform cursor movement
