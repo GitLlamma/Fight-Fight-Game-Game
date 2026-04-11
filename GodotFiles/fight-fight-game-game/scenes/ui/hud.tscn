@@ -108,6 +108,22 @@ theme_override_constants/separation = 10
 text = "Match Setup"
 horizontal_alignment = 1
 
+[node name="MouseOwnerRow" type="HBoxContainer" parent="CharacterSelectScreen/SelectContent"]
+alignment = 1
+theme_override_constants/separation = 8
+
+[node name="MouseOwnerLabel" type="Label" parent="CharacterSelectScreen/SelectContent/MouseOwnerRow"]
+text = "Mouse Controls"
+
+[node name="MouseOwnerP1Button" type="Button" parent="CharacterSelectScreen/SelectContent/MouseOwnerRow"]
+text = "P1"
+toggle_mode = true
+button_pressed = true
+
+[node name="MouseOwnerP2Button" type="Button" parent="CharacterSelectScreen/SelectContent/MouseOwnerRow"]
+text = "P2"
+toggle_mode = true
+
 [node name="PlayerColumns" type="HBoxContainer" parent="CharacterSelectScreen/SelectContent"]
 size_flags_vertical = 3
 theme_override_constants/separation = 16
@@ -121,6 +137,11 @@ text = "Player 1"
 horizontal_alignment = 1
 
 [node name="P1CharacterOption" type="OptionButton" parent="CharacterSelectScreen/SelectContent/PlayerColumns/P1Column"]
+visible = false
+
+[node name="P1SelectionLabel" type="Label" parent="CharacterSelectScreen/SelectContent/PlayerColumns/P1Column"]
+text = "Current: -"
+horizontal_alignment = 1
 
 [node name="P1PreviewLabel" type="Label" parent="CharacterSelectScreen/SelectContent/PlayerColumns/P1Column"]
 text = ""
@@ -136,14 +157,24 @@ text = "Player 2"
 horizontal_alignment = 1
 
 [node name="P2CharacterOption" type="OptionButton" parent="CharacterSelectScreen/SelectContent/PlayerColumns/P2Column"]
+visible = false
+
+[node name="P2SelectionLabel" type="Label" parent="CharacterSelectScreen/SelectContent/PlayerColumns/P2Column"]
+text = "Current: -"
+horizontal_alignment = 1
 
 [node name="P2PreviewLabel" type="Label" parent="CharacterSelectScreen/SelectContent/PlayerColumns/P2Column"]
 text = ""
 autowrap_mode = 3
 custom_minimum_size = Vector2(0, 120)
 
+[node name="CharacterGrid" type="GridContainer" parent="CharacterSelectScreen/SelectContent"]
+columns = 3
+theme_override_constants/h_separation = 8
+theme_override_constants/v_separation = 8
+
 [node name="HintLabel" type="Label" parent="CharacterSelectScreen/SelectContent"]
-text = "Pick fighters, then start the match. Rematch keeps the same selections."
+text = "Pick fighters, then start the match. Use Mouse Controls to choose whether clicks assign to P1 or P2."
 autowrap_mode = 3
 
 [node name="StartWarningLabel" type="Label" parent="CharacterSelectScreen/SelectContent"]

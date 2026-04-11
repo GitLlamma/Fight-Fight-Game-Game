@@ -157,6 +157,14 @@ Responsibilities:
 - when a controller is connected, Main Menu defaults focus to Start and shows it in a selected visual state
 - Controls menu defaults focus to the current tab's active Input Mode button (Keyboard or Controller)
 - in Controls, controller LB/RB switches between Player 1 and Player 2 tabs and applies focus to the active tab's Input Mode button
+- Character Select now uses an icon-grid scaffold instead of visible dropdowns; the old OptionButton data path remains internally for temporary compatibility during migration
+- mouse ownership is explicit in Character Select via P1/P2 owner toggle buttons; mouse clicks on grid tiles assign to the selected owner
+- in Character Select, controllers join per player slot by pressing any button on an inactive controller (currently supports 2 slots, architecture is map-based for future expansion)
+- each active controller gets an independent wrapped cursor on the grid; D-pad/left stick move the cursor, A locks selection, B unlocks selection
+- grid tiles visually show per-player cursor/lock state using color and label markers ([P1], [P2], [P1 LOCK], [P2 LOCK])
+- when a controller joins Character Select, the first button press only wakes/assigns that selector and does not perform movement or lock actions
+- joystick motion past deadzone can also wake/assign a controller selector, and that wake motion does not perform cursor movement
+- newly awakened selectors start hovering on Default Fighter in an unlocked state, and idle tiles are visually dimmed to avoid implying pre-selection
 - controls tab titles are set in script from translation keys to support future localization
 - full-screen placeholder background shown behind the controls screen
 - per-player segmented switch (Keyboard or Controller) with active/inactive visual state

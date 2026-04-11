@@ -18,8 +18,13 @@ signal character_select_requested()
 @onready var character_select_screen = $CharacterSelectScreen
 @onready var p1_character_option = $CharacterSelectScreen/SelectContent/PlayerColumns/P1Column/P1CharacterOption
 @onready var p2_character_option = $CharacterSelectScreen/SelectContent/PlayerColumns/P2Column/P2CharacterOption
+@onready var p1_selection_label = $CharacterSelectScreen/SelectContent/PlayerColumns/P1Column/P1SelectionLabel
+@onready var p2_selection_label = $CharacterSelectScreen/SelectContent/PlayerColumns/P2Column/P2SelectionLabel
 @onready var p1_preview_label = $CharacterSelectScreen/SelectContent/PlayerColumns/P1Column/P1PreviewLabel
 @onready var p2_preview_label = $CharacterSelectScreen/SelectContent/PlayerColumns/P2Column/P2PreviewLabel
+@onready var mouse_owner_p1_button = $CharacterSelectScreen/SelectContent/MouseOwnerRow/MouseOwnerP1Button
+@onready var mouse_owner_p2_button = $CharacterSelectScreen/SelectContent/MouseOwnerRow/MouseOwnerP2Button
+@onready var character_grid = $CharacterSelectScreen/SelectContent/CharacterGrid
 @onready var character_select_start_warning_label = $CharacterSelectScreen/SelectContent/StartWarningLabel
 @onready var start_match_button = $CharacterSelectBackground/StartMatchButton
 @onready var back_to_main_menu_button = $CharacterSelectBackground/BackToMainMenuButton
@@ -68,6 +73,12 @@ var right_axis_nav_held := false
 var up_axis_nav_held := false
 var down_axis_nav_held := false
 var main_menu_focus_target: StringName = &"start"
+var character_grid_buttons: Array[Button] = []
+var character_display_names_by_index: Array[String] = []
+var mouse_owner_player_number := 1
+var character_select_player_state := {}
+var character_select_device_to_player := {}
+var character_select_axis_hold_by_device := {}
 
 const CONTROLS_TAB_TITLE_P1_KEY := "UI_TAB_PLAYER_1"
 const CONTROLS_TAB_TITLE_P2_KEY := "UI_TAB_PLAYER_2"
@@ -88,6 +99,14 @@ const COLOR_STATUS_NEUTRAL := Color(0.85, 0.85, 0.85, 1.0)
 const MENU_HIGHLIGHT_COLOR := Color(1.0, 1.0, 1.0, 1.0)
 const MENU_DIM_COLOR := Color(0.8, 0.8, 0.8, 1.0)
 const CONTROLLER_MENU_NAV_DEADZONE := 0.55
+const PLAYER_SLOT_IDS: Array[int] = [1, 2]
+const PLAYER_CURSOR_COLOR_P1 := Color(1.0, 0.7, 0.7, 1.0)
+const PLAYER_CURSOR_COLOR_P2 := Color(0.7, 0.85, 1.0, 1.0)
+const PLAYER_CURSOR_COLOR_BOTH := Color(0.85, 0.7, 1.0, 1.0)
+const PLAYER_LOCK_COLOR_P1 := Color(1.0, 0.5, 0.5, 1.0)
+const PLAYER_LOCK_COLOR_P2 := Color(0.55, 0.75, 1.0, 1.0)
+const PLAYER_LOCK_COLOR_BOTH := Color(1.0, 0.55, 1.0, 1.0)
+const CHARACTER_TILE_IDLE_COLOR := Color(0.72, 0.72, 0.72, 1.0)
 const MAIN_MENU_TARGET_START: StringName = &"start"
 const MAIN_MENU_TARGET_CONTROLS: StringName = &"controls"
 const REQUIRED_REBIND_ACTIONS: Array[StringName] = [
@@ -120,6 +139,8 @@ func _ready():
 	back_to_select_button.pressed.connect(_on_back_to_select_button_pressed)
 	start_match_button.pressed.connect(_on_start_match_button_pressed)
 	back_to_main_menu_button.pressed.connect(_on_back_to_main_menu_button_pressed)
+	mouse_owner_p1_button.pressed.connect(_on_mouse_owner_p1_button_pressed)
+	mouse_owner_p2_button.pressed.connect(_on_mouse_owner_p2_button_pressed)
 	controls_back_button.pressed.connect(_on_controls_back_button_pressed)
 	p1_keyboard_input_button.pressed.connect(_on_p1_keyboard_input_button_pressed)
 	p1_controller_input_button.pressed.connect(_on_p1_controller_input_button_pressed)
@@ -152,6 +173,16 @@ func _notification(what: int) -> void:
 		_refresh_controls_tab_titles()
 
 func _input(event: InputEvent) -> void:
+	if character_select_screen.visible:
+		if event is InputEventJoypadButton:
+			if _handle_character_select_controller_button(event as InputEventJoypadButton):
+				get_viewport().set_input_as_handled()
+				return
+		elif event is InputEventJoypadMotion:
+			if _handle_character_select_controller_motion(event as InputEventJoypadMotion):
+				get_viewport().set_input_as_handled()
+				return
+
 	if pending_rebind_action == &"":
 		return
 
@@ -304,6 +335,7 @@ func show_character_select(character_options: Array, default_p1: StringName, def
 	controller_reconnect_overlay.hide()
 	hide_winner()
 	_populate_character_options(character_options, default_p1, default_p2)
+	_reset_character_select_player_state()
 	_refresh_start_match_availability()
 	_focus_default_for_visible_menu()
 
@@ -313,20 +345,25 @@ func hide_character_select() -> void:
 
 func _populate_character_options(character_options: Array, default_p1: StringName, default_p2: StringName) -> void:
 	character_ids_by_index.clear()
+	character_display_names_by_index.clear()
 	character_options_by_id.clear()
 	p1_character_option.clear()
 	p2_character_option.clear()
+	_character_grid_clear_buttons()
 
 	for option in character_options:
 		var character_id: StringName = option.get("character_id", &"default_fighter")
 		var display_name: String = option.get("display_name", String(character_id))
 		character_ids_by_index.append(character_id)
+		character_display_names_by_index.append(display_name)
 		character_options_by_id[character_id] = option
 		p1_character_option.add_item(display_name)
 		p2_character_option.add_item(display_name)
+		_create_character_grid_button(character_id, display_name)
 
 	_select_character_option(p1_character_option, default_p1)
 	_select_character_option(p2_character_option, default_p2)
+	_refresh_mouse_owner_buttons_visuals()
 	_refresh_character_previews()
 
 func _select_character_option(option_button: OptionButton, target_character_id: StringName) -> void:
@@ -348,8 +385,364 @@ func _get_selected_character_id(option_button: OptionButton) -> StringName:
 	return character_ids_by_index[selected_index]
 
 func _refresh_character_previews() -> void:
-	p1_preview_label.text = _build_preview_text(_get_selected_character_id(p1_character_option))
-	p2_preview_label.text = _build_preview_text(_get_selected_character_id(p2_character_option))
+	var p1_selected_id: StringName = _get_selected_character_id(p1_character_option)
+	var p2_selected_id: StringName = _get_selected_character_id(p2_character_option)
+	p1_selection_label.text = "P1: %s" % _build_character_select_player_status(1)
+	p2_selection_label.text = "P2: %s" % _build_character_select_player_status(2)
+	p1_preview_label.text = _build_preview_text(p1_selected_id)
+	p2_preview_label.text = _build_preview_text(p2_selected_id)
+	_refresh_character_grid_visuals()
+
+func _on_mouse_owner_p1_button_pressed() -> void:
+	mouse_owner_player_number = 1
+	_refresh_mouse_owner_buttons_visuals()
+
+func _on_mouse_owner_p2_button_pressed() -> void:
+	mouse_owner_player_number = 2
+	_refresh_mouse_owner_buttons_visuals()
+
+func _refresh_mouse_owner_buttons_visuals() -> void:
+	if mouse_owner_player_number == 2:
+		mouse_owner_p2_button.button_pressed = true
+		mouse_owner_p1_button.button_pressed = false
+	else:
+		mouse_owner_p1_button.button_pressed = true
+		mouse_owner_p2_button.button_pressed = false
+
+	_set_menu_button_selected(mouse_owner_p1_button, mouse_owner_player_number == 1)
+	_set_menu_button_selected(mouse_owner_p2_button, mouse_owner_player_number == 2)
+
+func _character_grid_clear_buttons() -> void:
+	for child in character_grid.get_children():
+		child.queue_free()
+	character_grid_buttons.clear()
+
+func _create_character_grid_button(character_id: StringName, display_name: String) -> void:
+	var tile_button := Button.new()
+	tile_button.text = display_name
+	tile_button.custom_minimum_size = Vector2(120, 64)
+	tile_button.pressed.connect(_on_character_grid_tile_pressed.bind(character_id))
+	character_grid.add_child(tile_button)
+	character_grid_buttons.append(tile_button)
+
+func _on_character_grid_tile_pressed(character_id: StringName) -> void:
+	var cursor_index: int = _find_character_index(character_id)
+	if cursor_index < 0:
+		return
+
+	if mouse_owner_player_number == 2:
+		_set_character_select_cursor_index(2, cursor_index)
+		_set_character_select_locked(2, false)
+		_select_character_option(p2_character_option, character_id)
+		_on_character_option_changed(p2_character_option.selected)
+		return
+
+	_set_character_select_cursor_index(1, cursor_index)
+	_set_character_select_locked(1, false)
+	_select_character_option(p1_character_option, character_id)
+	_on_character_option_changed(p1_character_option.selected)
+
+func _get_character_display_name(character_id: StringName) -> String:
+	var option: Dictionary = character_options_by_id.get(character_id, {})
+	if option.is_empty():
+		return String(character_id)
+	return String(option.get("display_name", String(character_id)))
+
+func _build_character_select_player_status(player_number: int) -> String:
+	var state: Dictionary = character_select_player_state.get(player_number, {})
+	if state.is_empty() or not bool(state.get("active", false)):
+		return "inactive (press any button to join)"
+
+	var cursor_index: int = int(state.get("cursor_index", 0))
+	var cursor_name: String = _get_character_name_for_index(cursor_index)
+	if bool(state.get("locked", false)):
+		return "locked on %s (B to unlock)" % cursor_name
+	return "hovering %s (A to lock)" % cursor_name
+
+func _reset_character_select_player_state() -> void:
+	character_select_player_state.clear()
+	character_select_device_to_player.clear()
+	character_select_axis_hold_by_device.clear()
+	for player_number in PLAYER_SLOT_IDS:
+		character_select_player_state[player_number] = {
+			"active": false,
+			"locked": false,
+			"cursor_index": _get_selected_index_for_player(player_number),
+			"device_id": -1,
+		}
+	_refresh_character_previews()
+
+func _get_selected_index_for_player(player_number: int) -> int:
+	var option: OptionButton = p2_character_option if player_number == 2 else p1_character_option
+	if option == null:
+		return 0
+	if option.selected >= 0 and option.selected < character_ids_by_index.size():
+		return option.selected
+	return 0
+
+func _find_character_index(character_id: StringName) -> int:
+	for index in character_ids_by_index.size():
+		if character_ids_by_index[index] == character_id:
+			return index
+	return -1
+
+func _handle_character_select_controller_button(button_event: InputEventJoypadButton) -> bool:
+	if not button_event.pressed:
+		return false
+
+	var existing_player: int = _get_character_select_player_for_device(button_event.device)
+	if existing_player <= 0:
+		_get_or_join_character_select_player_for_device(button_event.device)
+		# First press only joins/activates this selector; gameplay actions start on next press.
+		return true
+
+	var player_number: int = existing_player
+	if player_number <= 0:
+		return false
+
+	var state: Dictionary = character_select_player_state.get(player_number, {})
+	if state.is_empty():
+		return false
+
+	match button_event.button_index:
+		JOY_BUTTON_DPAD_LEFT:
+			_move_character_select_cursor(player_number, -1, 0)
+			return true
+		JOY_BUTTON_DPAD_RIGHT:
+			_move_character_select_cursor(player_number, 1, 0)
+			return true
+		JOY_BUTTON_DPAD_UP:
+			_move_character_select_cursor(player_number, 0, -1)
+			return true
+		JOY_BUTTON_DPAD_DOWN:
+			_move_character_select_cursor(player_number, 0, 1)
+			return true
+		JOY_BUTTON_A:
+			_lock_character_select_choice(player_number)
+			return true
+		JOY_BUTTON_B:
+			_unlock_character_select_choice(player_number)
+			return true
+
+	return true
+
+func _handle_character_select_controller_motion(motion_event: InputEventJoypadMotion) -> bool:
+	var player_number: int = _get_character_select_player_for_device(motion_event.device)
+	if player_number <= 0:
+		var wake_motion: bool = absf(motion_event.axis_value) >= CONTROLLER_MENU_NAV_DEADZONE
+		if not wake_motion:
+			return false
+
+		_get_or_join_character_select_player_for_device(motion_event.device)
+		# First motion only wakes/assigns this selector; movement starts on next input.
+		return true
+
+	if player_number <= 0:
+		return false
+
+	var held: Dictionary = character_select_axis_hold_by_device.get(motion_event.device, {
+		"left": false,
+		"right": false,
+		"up": false,
+		"down": false,
+	})
+
+	var consumed := false
+	if motion_event.axis == JOY_AXIS_LEFT_X:
+		if motion_event.axis_value <= -CONTROLLER_MENU_NAV_DEADZONE:
+			if not bool(held.get("left", false)):
+				held["left"] = true
+				_move_character_select_cursor(player_number, -1, 0)
+				consumed = true
+		else:
+			held["left"] = false
+
+		if motion_event.axis_value >= CONTROLLER_MENU_NAV_DEADZONE:
+			if not bool(held.get("right", false)):
+				held["right"] = true
+				_move_character_select_cursor(player_number, 1, 0)
+				consumed = true
+		else:
+			held["right"] = false
+
+	if motion_event.axis == JOY_AXIS_LEFT_Y:
+		if motion_event.axis_value <= -CONTROLLER_MENU_NAV_DEADZONE:
+			if not bool(held.get("up", false)):
+				held["up"] = true
+				_move_character_select_cursor(player_number, 0, -1)
+				consumed = true
+		else:
+			held["up"] = false
+
+		if motion_event.axis_value >= CONTROLLER_MENU_NAV_DEADZONE:
+			if not bool(held.get("down", false)):
+				held["down"] = true
+				_move_character_select_cursor(player_number, 0, 1)
+				consumed = true
+		else:
+			held["down"] = false
+
+	character_select_axis_hold_by_device[motion_event.device] = held
+	return consumed
+
+func _get_character_select_player_for_device(device_id: int) -> int:
+	return int(character_select_device_to_player.get(device_id, 0))
+
+func _get_or_join_character_select_player_for_device(device_id: int) -> int:
+	var existing_player: int = _get_character_select_player_for_device(device_id)
+	if existing_player > 0:
+		return existing_player
+
+	for player_number in PLAYER_SLOT_IDS:
+		var state: Dictionary = character_select_player_state.get(player_number, {})
+		if bool(state.get("active", false)):
+			continue
+		state["active"] = true
+		state["locked"] = false
+		state["device_id"] = device_id
+		character_select_player_state[player_number] = state
+		character_select_device_to_player[device_id] = player_number
+		character_select_axis_hold_by_device[device_id] = {
+			"left": false,
+			"right": false,
+			"up": false,
+			"down": false,
+		}
+		_refresh_character_previews()
+		return player_number
+
+	return 0
+
+func _set_character_select_cursor_index(player_number: int, cursor_index: int) -> void:
+	if character_ids_by_index.is_empty():
+		return
+
+	var state: Dictionary = character_select_player_state.get(player_number, {})
+	if state.is_empty():
+		return
+
+	var wrapped_index := cursor_index % character_ids_by_index.size()
+	if wrapped_index < 0:
+		wrapped_index += character_ids_by_index.size()
+	state["cursor_index"] = wrapped_index
+	character_select_player_state[player_number] = state
+	_refresh_character_grid_visuals()
+
+func _set_character_select_locked(player_number: int, locked: bool) -> void:
+	var state: Dictionary = character_select_player_state.get(player_number, {})
+	if state.is_empty():
+		return
+	state["locked"] = locked
+	character_select_player_state[player_number] = state
+
+func _move_character_select_cursor(player_number: int, move_x: int, move_y: int) -> void:
+	if character_ids_by_index.is_empty():
+		return
+
+	var state: Dictionary = character_select_player_state.get(player_number, {})
+	if state.is_empty() or bool(state.get("locked", false)):
+		return
+
+	var current_index: int = int(state.get("cursor_index", 0))
+	var columns: int = max(character_grid.columns, 1)
+	var delta := move_x
+	if move_y != 0:
+		delta = move_y * columns
+	var next_index := (current_index + delta) % character_ids_by_index.size()
+	if next_index < 0:
+		next_index += character_ids_by_index.size()
+	state["cursor_index"] = next_index
+	character_select_player_state[player_number] = state
+	_refresh_character_grid_visuals()
+
+func _lock_character_select_choice(player_number: int) -> void:
+	if character_ids_by_index.is_empty():
+		return
+
+	var state: Dictionary = character_select_player_state.get(player_number, {})
+	if state.is_empty():
+		return
+
+	var cursor_index: int = int(state.get("cursor_index", 0))
+	if cursor_index < 0 or cursor_index >= character_ids_by_index.size():
+		return
+
+	var character_id: StringName = character_ids_by_index[cursor_index]
+	if player_number == 2:
+		_select_character_option(p2_character_option, character_id)
+	else:
+		_select_character_option(p1_character_option, character_id)
+
+	state["locked"] = true
+	character_select_player_state[player_number] = state
+	_refresh_character_previews()
+
+func _unlock_character_select_choice(player_number: int) -> void:
+	var state: Dictionary = character_select_player_state.get(player_number, {})
+	if state.is_empty():
+		return
+	if not bool(state.get("locked", false)):
+		return
+
+	state["locked"] = false
+	character_select_player_state[player_number] = state
+	_refresh_character_previews()
+
+func _refresh_character_grid_visuals() -> void:
+	for index in character_grid_buttons.size():
+		var tile: Button = character_grid_buttons[index]
+		if tile == null:
+			continue
+
+		var p1_active := _is_character_player_active(1)
+		var p2_active := _is_character_player_active(2)
+		var p1_cursor := p1_active and _get_character_player_cursor_index(1) == index
+		var p2_cursor := p2_active and _get_character_player_cursor_index(2) == index
+		var p1_locked := p1_cursor and _is_character_player_locked(1)
+		var p2_locked := p2_cursor and _is_character_player_locked(2)
+
+		tile.self_modulate = CHARACTER_TILE_IDLE_COLOR
+		if p1_locked and p2_locked:
+			tile.self_modulate = PLAYER_LOCK_COLOR_BOTH
+		elif p1_locked:
+			tile.self_modulate = PLAYER_LOCK_COLOR_P1
+		elif p2_locked:
+			tile.self_modulate = PLAYER_LOCK_COLOR_P2
+		elif p1_cursor and p2_cursor:
+			tile.self_modulate = PLAYER_CURSOR_COLOR_BOTH
+		elif p1_cursor:
+			tile.self_modulate = PLAYER_CURSOR_COLOR_P1
+		elif p2_cursor:
+			tile.self_modulate = PLAYER_CURSOR_COLOR_P2
+
+		var marker := ""
+		if p1_locked:
+			marker += " [P1 LOCK]"
+		elif p1_cursor:
+			marker += " [P1]"
+		if p2_locked:
+			marker += " [P2 LOCK]"
+		elif p2_cursor:
+			marker += " [P2]"
+		var base_label: String = character_display_names_by_index[index] if index < character_display_names_by_index.size() else tile.text
+		tile.text = "%s%s" % [base_label, marker]
+
+func _get_character_name_for_index(index: int) -> String:
+	if index < 0 or index >= character_ids_by_index.size():
+		return "Unknown"
+	return _get_character_display_name(character_ids_by_index[index])
+
+func _is_character_player_active(player_number: int) -> bool:
+	var state: Dictionary = character_select_player_state.get(player_number, {})
+	return bool(state.get("active", false))
+
+func _is_character_player_locked(player_number: int) -> bool:
+	var state: Dictionary = character_select_player_state.get(player_number, {})
+	return bool(state.get("locked", false))
+
+func _get_character_player_cursor_index(player_number: int) -> int:
+	var state: Dictionary = character_select_player_state.get(player_number, {})
+	return int(state.get("cursor_index", -1))
 
 func _build_preview_text(character_id: StringName) -> String:
 	var option: Dictionary = character_options_by_id.get(character_id, {})
@@ -736,7 +1129,9 @@ func _resolve_controller_device_for_player(player_number: int, connected_devices
 
 	return connected_devices[0]
 
-func _on_joy_connection_changed(_device: int, _connected: bool) -> void:
+func _on_joy_connection_changed(device: int, connected: bool) -> void:
+	if not connected:
+		_remove_character_select_device_assignment(device)
 	_refresh_controller_device_options()
 	_refresh_controller_connection_status_labels()
 	_refresh_controller_assignment_warning()
@@ -744,6 +1139,23 @@ func _on_joy_connection_changed(_device: int, _connected: bool) -> void:
 	if main_menu_screen.visible:
 		_focus_default_for_visible_menu()
 	_refresh_main_menu_button_selection_visuals()
+
+func _remove_character_select_device_assignment(device_id: int) -> void:
+	var player_number: int = _get_character_select_player_for_device(device_id)
+	if player_number <= 0:
+		return
+
+	character_select_device_to_player.erase(device_id)
+	character_select_axis_hold_by_device.erase(device_id)
+
+	var state: Dictionary = character_select_player_state.get(player_number, {})
+	if state.is_empty():
+		return
+	state["active"] = false
+	state["locked"] = false
+	state["device_id"] = -1
+	character_select_player_state[player_number] = state
+	_refresh_character_previews()
 
 func _refresh_start_match_availability() -> void:
 	if character_select_start_warning_label == null:
@@ -898,8 +1310,8 @@ func _focus_default_for_visible_menu() -> void:
 		_focus_default_controls_menu_item()
 		return
 	if character_select_screen.visible:
-		if get_viewport().gui_get_focus_owner() == null:
-			p1_character_option.grab_focus()
+		if get_viewport().gui_get_focus_owner() == null and character_grid_buttons.size() > 0:
+			character_grid_buttons[0].grab_focus()
 		return
 	if win_screen.visible:
 		if get_viewport().gui_get_focus_owner() == null:
