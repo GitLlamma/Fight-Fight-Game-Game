@@ -15,6 +15,44 @@ text = "P1 Health: 100"
 [node name="P2HealthLabel" type="Label" parent="VBoxContainer"]
 text = "P2 Health: 100"
 
+[node name="MainMenuBackground" type="ColorRect" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_right = 0.0
+offset_bottom = 0.0
+color = Color(0.09, 0.13, 0.2, 1)
+
+[node name="MainMenuScreen" type="PanelContainer" parent="."]
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -170.0
+offset_top = -120.0
+offset_right = 170.0
+offset_bottom = 120.0
+
+[node name="MainMenuContent" type="VBoxContainer" parent="MainMenuScreen"]
+offset_left = 18.0
+offset_top = 18.0
+offset_right = 322.0
+offset_bottom = 222.0
+theme_override_constants/separation = 12
+
+[node name="TitleLabel" type="Label" parent="MainMenuScreen/MainMenuContent"]
+text = "Fight Fight Game Game"
+horizontal_alignment = 1
+
+[node name="SubtitleLabel" type="Label" parent="MainMenuScreen/MainMenuContent"]
+text = "Choose where to go next"
+horizontal_alignment = 1
+
+[node name="StartButton" type="Button" parent="MainMenuScreen/MainMenuContent"]
+text = "Start"
+
+[node name="ControlsButton" type="Button" parent="MainMenuScreen/MainMenuContent"]
+text = "Controls"
+
 [node name="WinScreen" type="PanelContainer" parent="."]
 anchor_left = 0.5
 anchor_top = 0.5
@@ -42,63 +80,378 @@ text = "Rematch"
 [node name="BackToSelectButton" type="Button" parent="WinScreen/WinContent"]
 text = "Back To Character Select"
 
+[node name="CharacterSelectBackground" type="ColorRect" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_right = 0.0
+offset_bottom = 0.0
+color = Color(0.08, 0.14, 0.1, 1)
+
 [node name="CharacterSelectScreen" type="PanelContainer" parent="."]
 anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -190.0
-offset_top = -180.0
-offset_right = 190.0
-offset_bottom = 180.0
+offset_left = -280.0
+offset_top = -190.0
+offset_right = 280.0
+offset_bottom = 190.0
 
-[node name="SelectScroll" type="ScrollContainer" parent="CharacterSelectScreen"]
+[node name="SelectContent" type="VBoxContainer" parent="CharacterSelectScreen"]
 offset_left = 18.0
 offset_top = 18.0
-offset_right = 362.0
-offset_bottom = 342.0
-
-[node name="SelectContent" type="VBoxContainer" parent="CharacterSelectScreen/SelectScroll"]
-custom_minimum_size = Vector2(344, 0)
+offset_right = 542.0
+offset_bottom = 362.0
 theme_override_constants/separation = 10
 
-[node name="TitleLabel" type="Label" parent="CharacterSelectScreen/SelectScroll/SelectContent"]
+[node name="TitleLabel" type="Label" parent="CharacterSelectScreen/SelectContent"]
 text = "Match Setup"
 horizontal_alignment = 1
 
-[node name="P1Row" type="HBoxContainer" parent="CharacterSelectScreen/SelectScroll/SelectContent"]
-theme_override_constants/separation = 12
+[node name="PlayerColumns" type="HBoxContainer" parent="CharacterSelectScreen/SelectContent"]
+size_flags_vertical = 3
+theme_override_constants/separation = 16
 
-[node name="P1Label" type="Label" parent="CharacterSelectScreen/SelectScroll/SelectContent/P1Row"]
+[node name="P1Column" type="VBoxContainer" parent="CharacterSelectScreen/SelectContent/PlayerColumns"]
 size_flags_horizontal = 3
+theme_override_constants/separation = 8
+
+[node name="P1Label" type="Label" parent="CharacterSelectScreen/SelectContent/PlayerColumns/P1Column"]
 text = "Player 1"
+horizontal_alignment = 1
 
-[node name="P1CharacterOption" type="OptionButton" parent="CharacterSelectScreen/SelectScroll/SelectContent/P1Row"]
-size_flags_horizontal = 3
+[node name="P1CharacterOption" type="OptionButton" parent="CharacterSelectScreen/SelectContent/PlayerColumns/P1Column"]
 
-[node name="P1PreviewLabel" type="Label" parent="CharacterSelectScreen/SelectScroll/SelectContent"]
+[node name="P1PreviewLabel" type="Label" parent="CharacterSelectScreen/SelectContent/PlayerColumns/P1Column"]
 text = ""
 autowrap_mode = 3
-custom_minimum_size = Vector2(0, 68)
+custom_minimum_size = Vector2(0, 120)
 
-[node name="P2Row" type="HBoxContainer" parent="CharacterSelectScreen/SelectScroll/SelectContent"]
-theme_override_constants/separation = 12
-
-[node name="P2Label" type="Label" parent="CharacterSelectScreen/SelectScroll/SelectContent/P2Row"]
+[node name="P2Column" type="VBoxContainer" parent="CharacterSelectScreen/SelectContent/PlayerColumns"]
 size_flags_horizontal = 3
+theme_override_constants/separation = 8
+
+[node name="P2Label" type="Label" parent="CharacterSelectScreen/SelectContent/PlayerColumns/P2Column"]
 text = "Player 2"
+horizontal_alignment = 1
 
-[node name="P2CharacterOption" type="OptionButton" parent="CharacterSelectScreen/SelectScroll/SelectContent/P2Row"]
-size_flags_horizontal = 3
+[node name="P2CharacterOption" type="OptionButton" parent="CharacterSelectScreen/SelectContent/PlayerColumns/P2Column"]
 
-[node name="P2PreviewLabel" type="Label" parent="CharacterSelectScreen/SelectScroll/SelectContent"]
+[node name="P2PreviewLabel" type="Label" parent="CharacterSelectScreen/SelectContent/PlayerColumns/P2Column"]
 text = ""
 autowrap_mode = 3
-custom_minimum_size = Vector2(0, 68)
+custom_minimum_size = Vector2(0, 120)
 
-[node name="HintLabel" type="Label" parent="CharacterSelectScreen/SelectScroll/SelectContent"]
+[node name="HintLabel" type="Label" parent="CharacterSelectScreen/SelectContent"]
 text = "Pick fighters, then start the match. Rematch keeps the same selections."
 autowrap_mode = 3
 
-[node name="StartMatchButton" type="Button" parent="CharacterSelectScreen/SelectScroll/SelectContent"]
+[node name="StartWarningLabel" type="Label" parent="CharacterSelectScreen/SelectContent"]
+visible = false
+text = "Controller assignment warning"
+autowrap_mode = 3
+
+[node name="SelectActions" type="HBoxContainer" parent="CharacterSelectScreen/SelectContent"]
+alignment = 1
+theme_override_constants/separation = 12
+
+[node name="BackToMainMenuButton" type="Button" parent="CharacterSelectBackground"]
+offset_left = 10.0
+offset_top = 10.0
+offset_right = 70.0
+offset_bottom = 41.0
+text = "Back"
+
+[node name="StartMatchButton" type="Button" parent="CharacterSelectBackground"]
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -70.0
+offset_top = 205.0
+offset_right = 70.0
+offset_bottom = 236.0
 text = "Start Match"
+
+[node name="ControlsBackground" type="ColorRect" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_right = 0.0
+offset_bottom = 0.0
+color = Color(0.12, 0.08, 0.12, 1)
+
+[node name="ControlsScreen" type="PanelContainer" parent="."]
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -240.0
+offset_top = -200.0
+offset_right = 240.0
+offset_bottom = 200.0
+
+[node name="ControlsContent" type="VBoxContainer" parent="ControlsScreen"]
+offset_left = 18.0
+offset_top = 18.0
+offset_right = 462.0
+offset_bottom = 382.0
+theme_override_constants/separation = 10
+
+[node name="ControlsTitleLabel" type="Label" parent="ControlsScreen/ControlsContent"]
+text = "Controls"
+horizontal_alignment = 1
+
+[node name="ControlsHintLabel" type="Label" parent="ControlsScreen/ControlsContent"]
+text = "Click a binding button, then press a keyboard key to remap. In controller mode, movement uses Left Stick/D-Pad and Jump/Attack use controller mappings."
+autowrap_mode = 3
+
+[node name="PlayerTabs" type="TabContainer" parent="ControlsScreen/ControlsContent"]
+size_flags_vertical = 3
+
+[node name="Player1Tab" type="VBoxContainer" parent="ControlsScreen/ControlsContent/PlayerTabs"]
+theme_override_constants/separation = 10
+
+[node name="P1InputModeRow" type="HBoxContainer" parent="ControlsScreen/ControlsContent/PlayerTabs/Player1Tab"]
+theme_override_constants/separation = 12
+
+[node name="P1InputModeLabel" type="Label" parent="ControlsScreen/ControlsContent/PlayerTabs/Player1Tab/P1InputModeRow"]
+size_flags_horizontal = 3
+text = "Input Mode"
+
+[node name="P1InputModeSwitch" type="HBoxContainer" parent="ControlsScreen/ControlsContent/PlayerTabs/Player1Tab/P1InputModeRow"]
+size_flags_horizontal = 3
+theme_override_constants/separation = 0
+
+[node name="KeyboardButton" type="Button" parent="ControlsScreen/ControlsContent/PlayerTabs/Player1Tab/P1InputModeRow/P1InputModeSwitch"]
+size_flags_horizontal = 3
+text = "Keyboard"
+toggle_mode = true
+
+[node name="ControllerButton" type="Button" parent="ControlsScreen/ControlsContent/PlayerTabs/Player1Tab/P1InputModeRow/P1InputModeSwitch"]
+size_flags_horizontal = 3
+text = "Controller"
+toggle_mode = true
+
+[node name="P1ControllerStatusLabel" type="Label" parent="ControlsScreen/ControlsContent/PlayerTabs/Player1Tab"]
+text = "Controller status unknown."
+autowrap_mode = 3
+
+[node name="P1ControllerDeviceRow" type="HBoxContainer" parent="ControlsScreen/ControlsContent/PlayerTabs/Player1Tab"]
+theme_override_constants/separation = 12
+
+[node name="P1ControllerDeviceLabel" type="Label" parent="ControlsScreen/ControlsContent/PlayerTabs/Player1Tab/P1ControllerDeviceRow"]
+size_flags_horizontal = 3
+text = "Controller Device"
+
+[node name="P1ControllerDeviceOption" type="OptionButton" parent="ControlsScreen/ControlsContent/PlayerTabs/Player1Tab/P1ControllerDeviceRow"]
+size_flags_horizontal = 3
+
+[node name="P1LeftRow" type="HBoxContainer" parent="ControlsScreen/ControlsContent/PlayerTabs/Player1Tab"]
+theme_override_constants/separation = 12
+
+[node name="P1LeftLabel" type="Label" parent="ControlsScreen/ControlsContent/PlayerTabs/Player1Tab/P1LeftRow"]
+size_flags_horizontal = 3
+text = "Move Left"
+
+[node name="P1LeftButton" type="Button" parent="ControlsScreen/ControlsContent/PlayerTabs/Player1Tab/P1LeftRow"]
+size_flags_horizontal = 3
+text = "A"
+
+[node name="P1RightRow" type="HBoxContainer" parent="ControlsScreen/ControlsContent/PlayerTabs/Player1Tab"]
+theme_override_constants/separation = 12
+
+[node name="P1RightLabel" type="Label" parent="ControlsScreen/ControlsContent/PlayerTabs/Player1Tab/P1RightRow"]
+size_flags_horizontal = 3
+text = "Move Right"
+
+[node name="P1RightButton" type="Button" parent="ControlsScreen/ControlsContent/PlayerTabs/Player1Tab/P1RightRow"]
+size_flags_horizontal = 3
+text = "D"
+
+[node name="P1UpRow" type="HBoxContainer" parent="ControlsScreen/ControlsContent/PlayerTabs/Player1Tab"]
+theme_override_constants/separation = 12
+
+[node name="P1UpLabel" type="Label" parent="ControlsScreen/ControlsContent/PlayerTabs/Player1Tab/P1UpRow"]
+size_flags_horizontal = 3
+text = "Move Up"
+
+[node name="P1UpButton" type="Button" parent="ControlsScreen/ControlsContent/PlayerTabs/Player1Tab/P1UpRow"]
+size_flags_horizontal = 3
+text = "W"
+
+[node name="P1DownRow" type="HBoxContainer" parent="ControlsScreen/ControlsContent/PlayerTabs/Player1Tab"]
+theme_override_constants/separation = 12
+
+[node name="P1DownLabel" type="Label" parent="ControlsScreen/ControlsContent/PlayerTabs/Player1Tab/P1DownRow"]
+size_flags_horizontal = 3
+text = "Move Down"
+
+[node name="P1DownButton" type="Button" parent="ControlsScreen/ControlsContent/PlayerTabs/Player1Tab/P1DownRow"]
+size_flags_horizontal = 3
+text = "S"
+
+[node name="P1JumpRow" type="HBoxContainer" parent="ControlsScreen/ControlsContent/PlayerTabs/Player1Tab"]
+theme_override_constants/separation = 12
+
+[node name="P1JumpLabel" type="Label" parent="ControlsScreen/ControlsContent/PlayerTabs/Player1Tab/P1JumpRow"]
+size_flags_horizontal = 3
+text = "Jump"
+
+[node name="P1JumpButton" type="Button" parent="ControlsScreen/ControlsContent/PlayerTabs/Player1Tab/P1JumpRow"]
+size_flags_horizontal = 3
+text = "Space"
+
+[node name="P1AttackRow" type="HBoxContainer" parent="ControlsScreen/ControlsContent/PlayerTabs/Player1Tab"]
+theme_override_constants/separation = 12
+
+[node name="P1AttackLabel" type="Label" parent="ControlsScreen/ControlsContent/PlayerTabs/Player1Tab/P1AttackRow"]
+size_flags_horizontal = 3
+text = "Attack"
+
+[node name="P1AttackButton" type="Button" parent="ControlsScreen/ControlsContent/PlayerTabs/Player1Tab/P1AttackRow"]
+size_flags_horizontal = 3
+text = "T"
+
+[node name="Player2Tab" type="VBoxContainer" parent="ControlsScreen/ControlsContent/PlayerTabs"]
+theme_override_constants/separation = 10
+
+[node name="P2InputModeRow" type="HBoxContainer" parent="ControlsScreen/ControlsContent/PlayerTabs/Player2Tab"]
+theme_override_constants/separation = 12
+
+[node name="P2InputModeLabel" type="Label" parent="ControlsScreen/ControlsContent/PlayerTabs/Player2Tab/P2InputModeRow"]
+size_flags_horizontal = 3
+text = "Input Mode"
+
+[node name="P2InputModeSwitch" type="HBoxContainer" parent="ControlsScreen/ControlsContent/PlayerTabs/Player2Tab/P2InputModeRow"]
+size_flags_horizontal = 3
+theme_override_constants/separation = 0
+
+[node name="KeyboardButton" type="Button" parent="ControlsScreen/ControlsContent/PlayerTabs/Player2Tab/P2InputModeRow/P2InputModeSwitch"]
+size_flags_horizontal = 3
+text = "Keyboard"
+toggle_mode = true
+
+[node name="ControllerButton" type="Button" parent="ControlsScreen/ControlsContent/PlayerTabs/Player2Tab/P2InputModeRow/P2InputModeSwitch"]
+size_flags_horizontal = 3
+text = "Controller"
+toggle_mode = true
+
+[node name="P2ControllerStatusLabel" type="Label" parent="ControlsScreen/ControlsContent/PlayerTabs/Player2Tab"]
+text = "Controller status unknown."
+autowrap_mode = 3
+
+[node name="P2ControllerDeviceRow" type="HBoxContainer" parent="ControlsScreen/ControlsContent/PlayerTabs/Player2Tab"]
+theme_override_constants/separation = 12
+
+[node name="P2ControllerDeviceLabel" type="Label" parent="ControlsScreen/ControlsContent/PlayerTabs/Player2Tab/P2ControllerDeviceRow"]
+size_flags_horizontal = 3
+text = "Controller Device"
+
+[node name="P2ControllerDeviceOption" type="OptionButton" parent="ControlsScreen/ControlsContent/PlayerTabs/Player2Tab/P2ControllerDeviceRow"]
+size_flags_horizontal = 3
+
+[node name="P2LeftRow" type="HBoxContainer" parent="ControlsScreen/ControlsContent/PlayerTabs/Player2Tab"]
+theme_override_constants/separation = 12
+
+[node name="P2LeftLabel" type="Label" parent="ControlsScreen/ControlsContent/PlayerTabs/Player2Tab/P2LeftRow"]
+size_flags_horizontal = 3
+text = "Move Left"
+
+[node name="P2LeftButton" type="Button" parent="ControlsScreen/ControlsContent/PlayerTabs/Player2Tab/P2LeftRow"]
+size_flags_horizontal = 3
+text = "Left"
+
+[node name="P2RightRow" type="HBoxContainer" parent="ControlsScreen/ControlsContent/PlayerTabs/Player2Tab"]
+theme_override_constants/separation = 12
+
+[node name="P2RightLabel" type="Label" parent="ControlsScreen/ControlsContent/PlayerTabs/Player2Tab/P2RightRow"]
+size_flags_horizontal = 3
+text = "Move Right"
+
+[node name="P2RightButton" type="Button" parent="ControlsScreen/ControlsContent/PlayerTabs/Player2Tab/P2RightRow"]
+size_flags_horizontal = 3
+text = "Right"
+
+[node name="P2UpRow" type="HBoxContainer" parent="ControlsScreen/ControlsContent/PlayerTabs/Player2Tab"]
+theme_override_constants/separation = 12
+
+[node name="P2UpLabel" type="Label" parent="ControlsScreen/ControlsContent/PlayerTabs/Player2Tab/P2UpRow"]
+size_flags_horizontal = 3
+text = "Move Up"
+
+[node name="P2UpButton" type="Button" parent="ControlsScreen/ControlsContent/PlayerTabs/Player2Tab/P2UpRow"]
+size_flags_horizontal = 3
+text = "Up Arrow"
+
+[node name="P2DownRow" type="HBoxContainer" parent="ControlsScreen/ControlsContent/PlayerTabs/Player2Tab"]
+theme_override_constants/separation = 12
+
+[node name="P2DownLabel" type="Label" parent="ControlsScreen/ControlsContent/PlayerTabs/Player2Tab/P2DownRow"]
+size_flags_horizontal = 3
+text = "Move Down"
+
+[node name="P2DownButton" type="Button" parent="ControlsScreen/ControlsContent/PlayerTabs/Player2Tab/P2DownRow"]
+size_flags_horizontal = 3
+text = "Down"
+
+[node name="P2JumpRow" type="HBoxContainer" parent="ControlsScreen/ControlsContent/PlayerTabs/Player2Tab"]
+theme_override_constants/separation = 12
+
+[node name="P2JumpLabel" type="Label" parent="ControlsScreen/ControlsContent/PlayerTabs/Player2Tab/P2JumpRow"]
+size_flags_horizontal = 3
+text = "Jump"
+
+[node name="P2JumpButton" type="Button" parent="ControlsScreen/ControlsContent/PlayerTabs/Player2Tab/P2JumpRow"]
+size_flags_horizontal = 3
+text = "O"
+
+[node name="P2AttackRow" type="HBoxContainer" parent="ControlsScreen/ControlsContent/PlayerTabs/Player2Tab"]
+theme_override_constants/separation = 12
+
+[node name="P2AttackLabel" type="Label" parent="ControlsScreen/ControlsContent/PlayerTabs/Player2Tab/P2AttackRow"]
+size_flags_horizontal = 3
+text = "Attack"
+
+[node name="P2AttackButton" type="Button" parent="ControlsScreen/ControlsContent/PlayerTabs/Player2Tab/P2AttackRow"]
+size_flags_horizontal = 3
+text = "P"
+
+[node name="ControllerAssignmentWarningLabel" type="Label" parent="ControlsScreen/ControlsContent"]
+visible = false
+text = "Controller assignment warning"
+autowrap_mode = 3
+
+[node name="BackButton" type="Button" parent="ControlsBackground"]
+offset_left = 10.0
+offset_top = 10.0
+offset_right = 70.0
+offset_bottom = 41.0
+text = "Back"
+
+[node name="ControllerReconnectOverlay" type="PanelContainer" parent="."]
+visible = false
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -210.0
+offset_top = -64.0
+offset_right = 210.0
+offset_bottom = 64.0
+
+[node name="ReconnectContent" type="VBoxContainer" parent="ControllerReconnectOverlay"]
+offset_left = 18.0
+offset_top = 18.0
+offset_right = 402.0
+offset_bottom = 110.0
+theme_override_constants/separation = 10
+
+[node name="ReconnectTitleLabel" type="Label" parent="ControllerReconnectOverlay/ReconnectContent"]
+text = "Controller Disconnected"
+horizontal_alignment = 1
+
+[node name="ReconnectBodyLabel" type="Label" parent="ControllerReconnectOverlay/ReconnectContent"]
+text = "Waiting for controller reconnection..."
+horizontal_alignment = 1
+autowrap_mode = 3

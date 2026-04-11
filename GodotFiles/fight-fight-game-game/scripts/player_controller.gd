@@ -16,6 +16,10 @@ class InputIntent:
 
 const DEFAULT_MOVE_EXECUTOR_SCRIPT: Script = preload("res://scripts/characters/default_move_executor.gd")
 const MOVE_DATA_SCRIPT: Script = preload("res://scripts/characters/move_data.gd")
+const DEFAULT_CHARACTER_ID := "default_fighter"
+const SPEED_CHARACTER_ID := "speed_fighter"
+const INPUT_MODE_KEYBOARD: StringName = &"keyboard"
+const INPUT_MODE_CONTROLLER: StringName = &"controller"
 
 @export var character_profile: CharacterData
 
@@ -49,6 +53,10 @@ const MOVE_DATA_SCRIPT: Script = preload("res://scripts/characters/move_data.gd"
 @export var attack_damage = 10.0
 @export var attack_cooldown = 0.5
 @export var damage_flash_duration = 0.12
+@export var show_directional_intent_debug := false
+@export var controller_axis_deadzone := 0.4
+@export var controller_jump_button: JoyButton = JOY_BUTTON_A
+@export var controller_attack_button: JoyButton = JOY_BUTTON_X
 
 var health: float
 var is_attacking = false
@@ -56,14 +64,21 @@ var attack_timer = 0.0
 var current_move_damage = 0.0
 var player_number = 1
 var facing_dir = 1
+var input_mode: StringName = INPUT_MODE_KEYBOARD
+var controller_device_id := -1
 var is_damage_flashing = false
 var jump_hold_timer = 0.0
 var jump_count = 0
 var double_jump_control_timer = 0.0
 var is_fast_falling = false
+var directional_intent_debug_label: Label
+var previous_controller_down_held := false
+var previous_controller_jump_held := false
+var previous_controller_attack_held := false
 
 @onready var sprite = $Sprite
 @onready var attack_hitbox = $AttackHitbox
+@onready var attack_collision = $AttackHitbox/AttackCollision
 @onready var attack_debug_fill = $AttackHitbox/AttackDebugFill
 @onready var attack_debug_outline = $AttackHitbox/AttackDebugOutline
 @onready var move_executor = $MoveExecutor
@@ -72,6 +87,10 @@ var current_animation = "idle"
 var fallback_move_data
 
 func _ready():
+	# Prevent stacking on another moving fighter from inheriting platform velocity.
+	# This keeps horizontal motion relative to world movement, not other players.
+	platform_floor_layers = 0
+	_ensure_directional_intent_debug_label()
 	_apply_character_profile()
 	health = max_health
 	if attack_hitbox:
@@ -123,6 +142,7 @@ func _apply_character_profile():
 func _physics_process(delta):
 	var raw_input = get_input()
 	var input_intent = _build_input_intent(raw_input)
+	_update_directional_intent_debug_label(input_intent.directional_intent)
 
 	# Handle movement with momentum and limited air turning.
 	var input_dir: int = input_intent.move_axis
@@ -213,6 +233,7 @@ func _physics_process(delta):
 	if input_intent.attack_pressed and attack_timer <= 0.0 and not is_attacking:
 		var move_data: MoveData = _resolve_move_data(input_intent)
 		move_requested.emit(player_number, move_data.move_id, is_on_floor(), input_intent.directional_intent)
+		_configure_attack_hitbox_for_move(move_data, is_on_floor(), input_intent.directional_intent)
 		current_move_damage = move_data.damage
 		move_executor.execute_move(self, move_data)
 		attack_timer = move_data.cooldown
@@ -223,35 +244,76 @@ func _physics_process(delta):
 	if sprite:
 		sprite.scale.x = float(facing_dir)
 
-	# Mirror attack hitbox with visual facing so attack direction matches sprite.
-	if attack_hitbox:
-		attack_hitbox.scale.x = float(facing_dir)
-	
 	move_and_slide()
 
 func get_input() -> Dictionary:
+	if _uses_controller_movement_input():
+		return _get_controller_movement_input()
+
+	return _get_keyboard_input()
+
+func _get_keyboard_input() -> Dictionary:
 	if player_number == 1:
 		return {
 			"left": Input.is_action_pressed("ui_left_p1"),
 			"right": Input.is_action_pressed("ui_right_p1"),
 			"up_held": Input.is_action_pressed("ui_up_p1"),
-			"down_held": _is_action_pressed_safe("ui_down_p1") or Input.is_action_pressed("ui_down"),
-			"jump": _is_action_just_pressed_safe("jump_p1") or Input.is_action_just_pressed("ui_up_p1"),
-			"jump_hold": _is_action_pressed_safe("jump_p1") or Input.is_action_pressed("ui_up_p1"),
-			"down_tap": _is_action_just_pressed_safe("ui_down_p1") or Input.is_action_just_pressed("ui_down"),
+			"down_held": _is_action_pressed_safe("ui_down_p1"),
+			"jump": _is_action_just_pressed_safe("jump_p1"),
+			"jump_hold": _is_action_pressed_safe("jump_p1"),
+			"down_tap": _is_action_just_pressed_safe("ui_down_p1"),
 			"attack": Input.is_action_just_pressed("attack_p1")
 		}
 	else:
 		return {
-			"left": Input.is_action_pressed("ui_left_p2") or Input.is_action_pressed("ui_left"),
-			"right": Input.is_action_pressed("ui_right_p2") or Input.is_action_pressed("ui_right"),
-			"up_held": Input.is_action_pressed("ui_up_p2") or Input.is_action_pressed("ui_up"),
-			"down_held": _is_action_pressed_safe("ui_down_p2") or Input.is_action_pressed("ui_down"),
-			"jump": _is_action_just_pressed_safe("jump_p2") or Input.is_action_just_pressed("ui_up_p2") or Input.is_action_just_pressed("ui_up"),
-			"jump_hold": _is_action_pressed_safe("jump_p2") or Input.is_action_pressed("ui_up_p2") or Input.is_action_pressed("ui_up"),
-			"down_tap": _is_action_just_pressed_safe("ui_down_p2") or Input.is_action_just_pressed("ui_down"),
+			"left": Input.is_action_pressed("ui_left_p2"),
+			"right": Input.is_action_pressed("ui_right_p2"),
+			"up_held": Input.is_action_pressed("ui_up_p2"),
+			"down_held": _is_action_pressed_safe("ui_down_p2"),
+			"jump": _is_action_just_pressed_safe("jump_p2"),
+			"jump_hold": _is_action_pressed_safe("jump_p2"),
+			"down_tap": _is_action_just_pressed_safe("ui_down_p2"),
 			"attack": Input.is_action_just_pressed("attack_p2")
 		}
+
+func _uses_controller_movement_input() -> bool:
+	if input_mode != INPUT_MODE_CONTROLLER:
+		return false
+	if controller_device_id < 0:
+		return false
+	return Input.get_connected_joypads().has(controller_device_id)
+
+func _get_controller_movement_input() -> Dictionary:
+	var axis_x: float = Input.get_joy_axis(controller_device_id, JOY_AXIS_LEFT_X)
+	var axis_y: float = Input.get_joy_axis(controller_device_id, JOY_AXIS_LEFT_Y)
+	var dpad_left: bool = Input.is_joy_button_pressed(controller_device_id, JOY_BUTTON_DPAD_LEFT)
+	var dpad_right: bool = Input.is_joy_button_pressed(controller_device_id, JOY_BUTTON_DPAD_RIGHT)
+	var dpad_up: bool = Input.is_joy_button_pressed(controller_device_id, JOY_BUTTON_DPAD_UP)
+	var dpad_down: bool = Input.is_joy_button_pressed(controller_device_id, JOY_BUTTON_DPAD_DOWN)
+
+	var left_held: bool = dpad_left or axis_x <= -controller_axis_deadzone
+	var right_held: bool = dpad_right or axis_x >= controller_axis_deadzone
+	var up_held: bool = dpad_up or axis_y <= -controller_axis_deadzone
+	var down_held: bool = dpad_down or axis_y >= controller_axis_deadzone
+	var down_tap: bool = down_held and not previous_controller_down_held
+	var jump_held: bool = Input.is_joy_button_pressed(controller_device_id, controller_jump_button)
+	var jump_pressed: bool = jump_held and not previous_controller_jump_held
+	var attack_held: bool = Input.is_joy_button_pressed(controller_device_id, controller_attack_button)
+	var attack_pressed: bool = attack_held and not previous_controller_attack_held
+	previous_controller_down_held = down_held
+	previous_controller_jump_held = jump_held
+	previous_controller_attack_held = attack_held
+
+	return {
+		"left": left_held,
+		"right": right_held,
+		"up_held": up_held,
+		"down_held": down_held,
+		"jump": jump_pressed,
+		"jump_hold": jump_held,
+		"down_tap": down_tap,
+		"attack": attack_pressed,
+	}
 
 func _build_input_intent(raw_input: Dictionary) -> InputIntent:
 	var intent = InputIntent.new()
@@ -259,14 +321,18 @@ func _build_input_intent(raw_input: Dictionary) -> InputIntent:
 	var right_held: bool = bool(raw_input.get("right", false))
 	var up_held: bool = bool(raw_input.get("up_held", false))
 	var down_held: bool = bool(raw_input.get("down_held", false))
+	var jump_held: bool = bool(raw_input.get("jump_hold", false))
 
 	intent.move_axis = _axis_from_directions(left_held, right_held)
-	intent.directional_intent = Vector2i(
-		intent.move_axis,
-		_axis_from_directions(up_held, down_held)
-	)
+
+	# Prioritize vertical directional intent for attacks over horizontal intent.
+	# Tie-break rule: if both up and down are held, prefer down.
+	var vertical_axis: int = _resolve_vertical_axis(up_held, down_held)
+
+	var horizontal_attack_axis: int = 0 if vertical_axis != 0 else intent.move_axis
+	intent.directional_intent = Vector2i(horizontal_attack_axis, vertical_axis)
 	intent.jump_pressed = bool(raw_input.get("jump", false))
-	intent.jump_held = bool(raw_input.get("jump_hold", false))
+	intent.jump_held = jump_held
 	intent.down_tap = bool(raw_input.get("down_tap", false))
 	intent.attack_pressed = bool(raw_input.get("attack", false))
 	return intent
@@ -275,6 +341,15 @@ func _axis_from_directions(negative: bool, positive: bool) -> int:
 	if negative == positive:
 		return 0
 	return -1 if negative else 1
+
+func _resolve_vertical_axis(up_held: bool, down_held: bool) -> int:
+	if down_held and up_held:
+		return 0
+	if up_held:
+		return -1
+	if down_held:
+		return 1
+	return 0
 
 func _ensure_move_executor():
 	if move_executor:
@@ -336,6 +411,23 @@ func _is_action_just_pressed_safe(action_name: String) -> bool:
 func _is_action_pressed_safe(action_name: String) -> bool:
 	return InputMap.has_action(action_name) and Input.is_action_pressed(action_name)
 
+func _ensure_directional_intent_debug_label() -> void:
+	if not show_directional_intent_debug:
+		return
+
+	directional_intent_debug_label = Label.new()
+	directional_intent_debug_label.name = "DirectionalIntentDebug"
+	directional_intent_debug_label.position = Vector2(0.0, -98.0)
+	directional_intent_debug_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	directional_intent_debug_label.modulate = Color(0.9, 1.0, 0.9, 1.0)
+	add_child(directional_intent_debug_label)
+
+func _update_directional_intent_debug_label(directional_intent: Vector2i) -> void:
+	if directional_intent_debug_label == null:
+		return
+
+	directional_intent_debug_label.text = "P%d Intent: (%d, %d)" % [player_number, directional_intent.x, directional_intent.y]
+
 func _perform_double_jump(input_dir: int):
 	velocity.y = double_jump_force
 	jump_hold_timer = max_jump_hold_time * double_jump_hold_factor
@@ -352,6 +444,79 @@ func _perform_double_jump(input_dir: int):
 		var turning_around: bool = signf(velocity.x) != 0.0 and signf(velocity.x) != float(jump_dir)
 		var burst_acceleration: float = double_jump_reverse_burst_acceleration if turning_around else double_jump_burst_acceleration
 		velocity.x = move_toward(velocity.x, target_speed, burst_acceleration)
+
+func _configure_attack_hitbox_for_move(_move_data: MoveData, is_grounded: bool, directional_intent: Vector2i) -> void:
+	if attack_collision == null:
+		return
+
+	if is_grounded:
+		_set_attack_hitbox_rect(Vector2(100.0, 64.0), Vector2(82.0 * facing_dir, -32.0))
+		return
+
+	var character_id: String = String(character_profile.character_id) if character_profile else DEFAULT_CHARACTER_ID
+	var use_speed_layout: bool = character_id == SPEED_CHARACTER_ID
+
+	# Use captured directional input for placeholder aerial hitbox direction.
+	if directional_intent.y < 0:
+		if use_speed_layout:
+			_set_attack_hitbox_rect(Vector2(62.0, 52.0), Vector2(0.0, -100.0))
+		else:
+			_set_attack_hitbox_rect(Vector2(70.0, 56.0), Vector2(0.0, -94.0))
+		return
+
+	if directional_intent.y > 0:
+		if use_speed_layout:
+			_set_attack_hitbox_rect(Vector2(62.0, 52.0), Vector2(0.0, 30.0))
+		else:
+			_set_attack_hitbox_rect(Vector2(70.0, 56.0), Vector2(0.0, 26.0))
+		return
+
+	if directional_intent.x != 0:
+		var forward_sign: float = 1.0 if directional_intent.x == facing_dir else -1.0
+		var local_sign: float = forward_sign * float(facing_dir)
+		if use_speed_layout:
+			var width: float = 108.0 if forward_sign > 0.0 else 100.0
+			_set_attack_hitbox_rect(Vector2(width, 44.0), Vector2(88.0 * local_sign, -32.0))
+		else:
+			var default_width: float = 94.0 if forward_sign > 0.0 else 90.0
+			_set_attack_hitbox_rect(Vector2(default_width, 54.0), Vector2(78.0 * local_sign, -32.0))
+		return
+
+	# Neutral aerial attack: all-around placeholder hitbox centered on player.
+	if use_speed_layout:
+		_set_attack_hitbox_rect(Vector2(84.0, 84.0), Vector2(0.0, -32.0))
+	else:
+		_set_attack_hitbox_rect(Vector2(92.0, 92.0), Vector2(0.0, -32.0))
+
+func _set_attack_hitbox_rect(size: Vector2, center: Vector2) -> void:
+	var rect_shape := attack_collision.shape as RectangleShape2D
+	if rect_shape == null:
+		rect_shape = RectangleShape2D.new()
+		attack_collision.shape = rect_shape
+
+	rect_shape.size = size
+	attack_collision.position = center
+	_update_attack_debug_geometry(size, center)
+
+func _update_attack_debug_geometry(size: Vector2, center: Vector2) -> void:
+	if attack_debug_fill:
+		attack_debug_fill.offset_left = center.x - size.x * 0.5
+		attack_debug_fill.offset_top = center.y - size.y * 0.5
+		attack_debug_fill.offset_right = center.x + size.x * 0.5
+		attack_debug_fill.offset_bottom = center.y + size.y * 0.5
+
+	if attack_debug_outline:
+		var left := center.x - size.x * 0.5
+		var top := center.y - size.y * 0.5
+		var right := center.x + size.x * 0.5
+		var bottom := center.y + size.y * 0.5
+		attack_debug_outline.points = PackedVector2Array([
+			Vector2(left, top),
+			Vector2(right, top),
+			Vector2(right, bottom),
+			Vector2(left, bottom),
+			Vector2(left, top),
+		])
 
 func begin_attack_state():
 	is_attacking = true
@@ -440,3 +605,16 @@ func set_player_number(num: int):
 		facing_dir = 1
 	else:
 		facing_dir = -1
+
+func configure_input_source(selected_input_mode: StringName, selected_device_id: int = -1) -> void:
+	input_mode = INPUT_MODE_CONTROLLER if selected_input_mode == INPUT_MODE_CONTROLLER else INPUT_MODE_KEYBOARD
+	controller_device_id = selected_device_id
+	previous_controller_down_held = false
+	previous_controller_jump_held = false
+	previous_controller_attack_held = false
+
+func configure_controller_bindings(jump_button: int, attack_button: int) -> void:
+	controller_jump_button = jump_button as JoyButton
+	controller_attack_button = attack_button as JoyButton
+	previous_controller_jump_held = false
+	previous_controller_attack_held = false

@@ -22,7 +22,8 @@ Default behavior:
 3. Prefer Godot-native patterns over ad hoc logic.
 4. Implement the smallest safe change that satisfies the request.
 5. Validate changes (errors, quick runtime sanity checks, and impacted flows if possible).
-6. Explain what changed and why.
+6. Update relevant project documentation for any behavior or workflow changes made.
+7. Explain what changed and why.
 
 Godot best practices to follow:
 - Keep logic in the right layer: scene tree for composition, scripts for behavior, Resources for reusable data.
@@ -54,6 +55,7 @@ Communication style:
 Constraints:
 - Do not make destructive or irreversible changes without explicit user approval.
 - Do not modify unrelated files; keep changes scoped to the requested feature/fix.
+- When code changes are made, update relevant documentation files in the same task (for example README.md, SETUP.md, DOCUMENTATION.md, or agent/instruction docs as appropriate).
 - Preserve backward compatibility for public gameplay behavior unless a breaking change is requested.
 - Do not perform broad refactors unless the user asks for one.
 - Before editing, check for existing architecture patterns and follow them.

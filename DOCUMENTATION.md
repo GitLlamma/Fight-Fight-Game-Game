@@ -62,6 +62,18 @@ This includes:
 - input mappings
 - autoloads such as MatchSetup
 
+Control defaults source of truth:
+- Default input mappings are defined in `project.godot` under `[input]`.
+- Runtime controls UI reads and remaps existing `InputMap` actions, and warns if required actions are missing.
+
+Current default controls from the input map:
+- Player 1: `A/D` move, `W` aim up, `S` aim down, `Space` jump, `T` attack
+- Player 2: `J/L` move, `I` aim up, `K` aim down, `O` jump, `P` attack
+
+Jump behavior note:
+- Jumping is triggered only by dedicated jump actions (`jump_p1` and `jump_p2`).
+- Up-direction actions are for directional intent and move selection, not jump activation.
+
 ### icon.svg
 The Godot project icon.
 
@@ -116,9 +128,33 @@ The HUD and menu scene.
 
 Responsibilities:
 - player health display
+- main menu with Start and Controls navigation
+- full-screen placeholder background shown behind the main menu
 - win screen
 - rematch and return-to-select buttons
-- temporary character select interface
+- character select interface with Player 1 (left) and Player 2 (right) columns plus Start and Back actions
+- character select Back action is positioned at the top-left of the panel for faster navigation
+- character select Start Match action is positioned below the panel as a separate button
+- full-screen placeholder background shown behind the character select screen
+- controls setup UI screen with separate Player 1 and Player 2 tabs
+- controls screen Back action is positioned at the top-left of the panel for consistency with character select
+- keyboard remapping for per-player actions (left, right, up, down, jump, attack) via click-then-press-key flow
+- controller mode now routes gameplay movement directions (left, right, up, down intent) from the assigned joypad
+- controller mode now also handles jump and attack with default face-button mappings
+- when controller mode is selected for a player, controls UI shows controller mappings instead of keyboard keys for that player's rows
+- in controller mode, movement rows are fixed to Left Stick/D-Pad directions while jump/attack rows show remappable controller button bindings
+- in controller mode, pressing Jump or Attack binding buttons captures the next controller button press for that player
+- controller jump/attack bindings persist per player in MatchSetup and are applied when spawning players
+- controls screen now includes per-player controller device selection (Auto or a specific connected device)
+- selected controller device preference persists per player in MatchSetup
+- if a selected controller is unavailable at match start, assignment falls back to deterministic auto selection
+- controls screen now shows per-player controller connection status using live joypad detection
+- controls screen now shows a warning when both players in controller mode could end up sharing a single controller
+- character select now blocks Start Match when both players in controller mode do not resolve to separate connected controllers
+- gameplay now pauses on controller disconnect and shows a reconnect prompt until controller input is recovered
+- controls tab titles are set in script from translation keys to support future localization
+- full-screen placeholder background shown behind the controls screen
+- per-player segmented switch (Keyboard or Controller) with active/inactive visual state
 
 ### scripts/
 Stores the main GDScript gameplay logic.
@@ -147,6 +183,11 @@ Controls match flow.
 Responsibilities:
 - listens to HUD signals
 - reads selected characters from MatchSetup
+- reads selected input mode from MatchSetup and assigns a connected joypad for controller mode
+- reads persisted per-player controller jump/attack bindings from MatchSetup and applies them to spawned players
+- reads persisted per-player preferred controller device ID and honors it when available
+- resolves controller assignments once per match spawn and avoids duplicate device assignment when alternatives exist
+- listens for controller connection changes during live matches and pauses/resumes around controller recovery
 - spawns and despawns players
 - forwards health and winner events to the HUD
 
@@ -155,19 +196,35 @@ Controls the player character.
 
 Responsibilities:
 - movement and physics
+- supports controller-driven movement directions when controller mode is selected
+- supports controller-driven jump and attack with default button mappings when controller mode is selected
 - jump logic, double jump, and fast fall
 - attack input and move resolution
+- directional aerial attacks with placeholder hitboxes for up/down/forward/back input
+- directional aerial attack intent is vertical-first when horizontal and vertical are both held
+- directional intent uses each player's dedicated mapped actions (no shared fallback actions)
+- neutral aerial attack uses a small all-around placeholder hitbox centered on the player
+- placeholder aerial hitbox layout is tuned separately per character profile (default and speed)
+- optional temporary Label2D debug text can display each player's directional attack intent vector in real time
 - hit detection and damage
 - animation state and visual feedback
+- prevents inherited platform-velocity boosts when fighters stack on top of each other
 
 #### scripts/hud.gd
 Controls the HUD and temporary menu flow.
 
 Responsibilities:
 - updates player health labels
+- routes menu navigation between main menu, controls screen, and character select
 - shows the winner screen
 - handles rematch and character-select navigation
 - populates the character selection UI
+- handles keyboard key remapping for action bindings
+- handles controller button remapping for jump and attack when a player is set to controller mode
+- handles per-player controller device selection and persists it
+- surfaces controller assignment warnings for duplicate/insufficient connected controllers
+- enforces controller assignment validity before starting a match
+- shows an in-match reconnect overlay while waiting for controller recovery after disconnect
 
 #### scripts/match_setup.gd
 Stores match setup state as an autoload singleton.
@@ -175,6 +232,9 @@ Stores match setup state as an autoload singleton.
 Responsibilities:
 - remembers selected character IDs
 - stores optional skin and loadout IDs
+- persists per-player input mode selection (keyboard/controller) from the controls menu
+- persists per-player controller jump and attack button bindings
+- persists per-player preferred controller device ID
 - provides defaults before the match starts
 
 #### scripts/input_handler.gd
@@ -286,11 +346,12 @@ The current flow is:
 
 1. Godot opens the main scene.
 2. `game_manager.gd` initializes the HUD and reads character setup data.
-3. The HUD shows the temporary character select UI.
-4. Starting a match causes the GameManager to spawn players from the selected CharacterData resources.
-5. During gameplay, player scripts emit health and defeat signals.
-6. The GameManager forwards those signals to the HUD.
-7. The HUD shows the win screen and supports rematch or returning to character select.
+3. The HUD shows a main menu with Start and Controls options.
+4. Start opens character select; Controls opens a controls setup screen UI.
+5. Starting a match from character select causes the GameManager to spawn players from the selected CharacterData resources.
+6. During gameplay, player scripts emit health and defeat signals.
+7. The GameManager forwards those signals to the HUD.
+8. The HUD shows the win screen and supports rematch or returning to character select.
 
 ## Future Documentation Ideas
 

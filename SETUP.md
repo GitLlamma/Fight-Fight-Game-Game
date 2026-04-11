@@ -176,6 +176,19 @@ To enable GDScript autocompletion with the **godot-tools** extension:
 
 ---
 
+## Default In-Game Controls
+
+Current defaults are configured in `GodotFiles/fight-fight-game-game/project.godot`.
+
+- Player 1: `A/D` move, `W` aim up, `S` aim down, `Space` jump, `T` attack
+- Player 2: `J/L` move, `I` aim up, `K` aim down, `O` jump, `P` attack
+
+Important behavior:
+- Players can only jump with the dedicated jump actions (`jump_p1` and `jump_p2`).
+- Up-direction actions (`ui_up_p1`, `ui_up_p2`) do not trigger jumps.
+
+---
+
 ## 6. Common Git Commands
 
 Here are the Git commands you'll use most often. Run these in the terminal from inside the project folder.
