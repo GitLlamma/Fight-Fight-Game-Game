@@ -124,9 +124,11 @@ The HUD and menu scene.
 
 Responsibilities:
 - player health display
+- main menu with Start and Controls navigation
 - win screen
 - rematch and return-to-select buttons
-- temporary character select interface
+- character select interface with Start and Back navigation
+- controls setup UI screen (layout only, remapping logic pending)
 
 ### scripts/
 Stores the main GDScript gameplay logic.
@@ -173,6 +175,7 @@ Controls the HUD and temporary menu flow.
 
 Responsibilities:
 - updates player health labels
+- routes menu navigation between main menu, controls screen, and character select
 - shows the winner screen
 - handles rematch and character-select navigation
 - populates the character selection UI
@@ -294,11 +297,12 @@ The current flow is:
 
 1. Godot opens the main scene.
 2. `game_manager.gd` initializes the HUD and reads character setup data.
-3. The HUD shows the temporary character select UI.
-4. Starting a match causes the GameManager to spawn players from the selected CharacterData resources.
-5. During gameplay, player scripts emit health and defeat signals.
-6. The GameManager forwards those signals to the HUD.
-7. The HUD shows the win screen and supports rematch or returning to character select.
+3. The HUD shows a main menu with Start and Controls options.
+4. Start opens character select; Controls opens a controls setup screen UI.
+5. Starting a match from character select causes the GameManager to spawn players from the selected CharacterData resources.
+6. During gameplay, player scripts emit health and defeat signals.
+7. The GameManager forwards those signals to the HUD.
+8. The HUD shows the win screen and supports rematch or returning to character select.
 
 ## Future Documentation Ideas
 

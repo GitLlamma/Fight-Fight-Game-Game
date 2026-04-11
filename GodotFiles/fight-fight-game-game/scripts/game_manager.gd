@@ -26,12 +26,14 @@ func _ready():
 	hud.rematch_requested.connect(_on_rematch_requested)
 	hud.character_select_requested.connect(_on_character_select_requested)
 	_sync_selected_characters()
-	hud.show_character_select(_get_available_character_options(), player1_character_id, player2_character_id)
+	hud.show_main_menu(_get_available_character_options(), player1_character_id, player2_character_id)
 
 func _spawn_match_players():
 	_sync_selected_characters()
 	game_over = false
 	hud.hide_winner()
+	hud.hide_main_menu()
+	hud.hide_controls_screen()
 	hud.hide_character_select()
 	_despawn_player(player1)
 	_despawn_player(player2)

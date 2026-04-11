@@ -15,6 +15,37 @@ text = "P1 Health: 100"
 [node name="P2HealthLabel" type="Label" parent="VBoxContainer"]
 text = "P2 Health: 100"
 
+[node name="MainMenuScreen" type="PanelContainer" parent="."]
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -170.0
+offset_top = -120.0
+offset_right = 170.0
+offset_bottom = 120.0
+
+[node name="MainMenuContent" type="VBoxContainer" parent="MainMenuScreen"]
+offset_left = 18.0
+offset_top = 18.0
+offset_right = 322.0
+offset_bottom = 222.0
+theme_override_constants/separation = 12
+
+[node name="TitleLabel" type="Label" parent="MainMenuScreen/MainMenuContent"]
+text = "Fight Fight Game Game"
+horizontal_alignment = 1
+
+[node name="SubtitleLabel" type="Label" parent="MainMenuScreen/MainMenuContent"]
+text = "Choose where to go next"
+horizontal_alignment = 1
+
+[node name="StartButton" type="Button" parent="MainMenuScreen/MainMenuContent"]
+text = "Start"
+
+[node name="ControlsButton" type="Button" parent="MainMenuScreen/MainMenuContent"]
+text = "Controls"
+
 [node name="WinScreen" type="PanelContainer" parent="."]
 anchor_left = 0.5
 anchor_top = 0.5
@@ -102,3 +133,131 @@ autowrap_mode = 3
 
 [node name="StartMatchButton" type="Button" parent="CharacterSelectScreen/SelectScroll/SelectContent"]
 text = "Start Match"
+
+[node name="BackToMainMenuButton" type="Button" parent="CharacterSelectScreen/SelectScroll/SelectContent"]
+text = "Back"
+
+[node name="ControlsScreen" type="PanelContainer" parent="."]
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -240.0
+offset_top = -200.0
+offset_right = 240.0
+offset_bottom = 200.0
+
+[node name="ControlsScroll" type="ScrollContainer" parent="ControlsScreen"]
+offset_left = 18.0
+offset_top = 18.0
+offset_right = 462.0
+offset_bottom = 382.0
+
+[node name="ControlsContent" type="VBoxContainer" parent="ControlsScreen/ControlsScroll"]
+custom_minimum_size = Vector2(444, 0)
+theme_override_constants/separation = 10
+
+[node name="ControlsTitleLabel" type="Label" parent="ControlsScreen/ControlsScroll/ControlsContent"]
+text = "Controls"
+horizontal_alignment = 1
+
+[node name="ControlsHintLabel" type="Label" parent="ControlsScreen/ControlsScroll/ControlsContent"]
+text = "UI only for now: remapping functionality will be added later."
+autowrap_mode = 3
+
+[node name="P1SectionLabel" type="Label" parent="ControlsScreen/ControlsScroll/ControlsContent"]
+text = "Player 1"
+
+[node name="P1MoveRow" type="HBoxContainer" parent="ControlsScreen/ControlsScroll/ControlsContent"]
+theme_override_constants/separation = 12
+
+[node name="P1MoveLabel" type="Label" parent="ControlsScreen/ControlsScroll/ControlsContent/P1MoveRow"]
+size_flags_horizontal = 3
+text = "Move Left / Right"
+
+[node name="P1MoveButton" type="Button" parent="ControlsScreen/ControlsScroll/ControlsContent/P1MoveRow"]
+size_flags_horizontal = 3
+text = "A / D"
+
+[node name="P1UpRow" type="HBoxContainer" parent="ControlsScreen/ControlsScroll/ControlsContent"]
+theme_override_constants/separation = 12
+
+[node name="P1UpLabel" type="Label" parent="ControlsScreen/ControlsScroll/ControlsContent/P1UpRow"]
+size_flags_horizontal = 3
+text = "Aim Up"
+
+[node name="P1UpButton" type="Button" parent="ControlsScreen/ControlsScroll/ControlsContent/P1UpRow"]
+size_flags_horizontal = 3
+text = "W"
+
+[node name="P1JumpRow" type="HBoxContainer" parent="ControlsScreen/ControlsScroll/ControlsContent"]
+theme_override_constants/separation = 12
+
+[node name="P1JumpLabel" type="Label" parent="ControlsScreen/ControlsScroll/ControlsContent/P1JumpRow"]
+size_flags_horizontal = 3
+text = "Jump"
+
+[node name="P1JumpButton" type="Button" parent="ControlsScreen/ControlsScroll/ControlsContent/P1JumpRow"]
+size_flags_horizontal = 3
+text = "Space"
+
+[node name="P1AttackRow" type="HBoxContainer" parent="ControlsScreen/ControlsScroll/ControlsContent"]
+theme_override_constants/separation = 12
+
+[node name="P1AttackLabel" type="Label" parent="ControlsScreen/ControlsScroll/ControlsContent/P1AttackRow"]
+size_flags_horizontal = 3
+text = "Attack"
+
+[node name="P1AttackButton" type="Button" parent="ControlsScreen/ControlsScroll/ControlsContent/P1AttackRow"]
+size_flags_horizontal = 3
+text = "T"
+
+[node name="P2SectionLabel" type="Label" parent="ControlsScreen/ControlsScroll/ControlsContent"]
+text = "Player 2"
+
+[node name="P2MoveRow" type="HBoxContainer" parent="ControlsScreen/ControlsScroll/ControlsContent"]
+theme_override_constants/separation = 12
+
+[node name="P2MoveLabel" type="Label" parent="ControlsScreen/ControlsScroll/ControlsContent/P2MoveRow"]
+size_flags_horizontal = 3
+text = "Move Left / Right"
+
+[node name="P2MoveButton" type="Button" parent="ControlsScreen/ControlsScroll/ControlsContent/P2MoveRow"]
+size_flags_horizontal = 3
+text = "Left / Right"
+
+[node name="P2UpRow" type="HBoxContainer" parent="ControlsScreen/ControlsScroll/ControlsContent"]
+theme_override_constants/separation = 12
+
+[node name="P2UpLabel" type="Label" parent="ControlsScreen/ControlsScroll/ControlsContent/P2UpRow"]
+size_flags_horizontal = 3
+text = "Aim Up"
+
+[node name="P2UpButton" type="Button" parent="ControlsScreen/ControlsScroll/ControlsContent/P2UpRow"]
+size_flags_horizontal = 3
+text = "Up Arrow"
+
+[node name="P2JumpRow" type="HBoxContainer" parent="ControlsScreen/ControlsScroll/ControlsContent"]
+theme_override_constants/separation = 12
+
+[node name="P2JumpLabel" type="Label" parent="ControlsScreen/ControlsScroll/ControlsContent/P2JumpRow"]
+size_flags_horizontal = 3
+text = "Jump"
+
+[node name="P2JumpButton" type="Button" parent="ControlsScreen/ControlsScroll/ControlsContent/P2JumpRow"]
+size_flags_horizontal = 3
+text = "O"
+
+[node name="P2AttackRow" type="HBoxContainer" parent="ControlsScreen/ControlsScroll/ControlsContent"]
+theme_override_constants/separation = 12
+
+[node name="P2AttackLabel" type="Label" parent="ControlsScreen/ControlsScroll/ControlsContent/P2AttackRow"]
+size_flags_horizontal = 3
+text = "Attack"
+
+[node name="P2AttackButton" type="Button" parent="ControlsScreen/ControlsScroll/ControlsContent/P2AttackRow"]
+size_flags_horizontal = 3
+text = "P"
+
+[node name="BackButton" type="Button" parent="ControlsScreen/ControlsScroll/ControlsContent"]
+text = "Back"
