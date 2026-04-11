@@ -146,9 +146,7 @@ custom_minimum_size = Vector2(240, 24)
 clip_text = true
 
 [node name="P1PreviewLabel" type="Label" parent="CharacterSelectScreen/SelectContent/PlayerColumns/P1Column"]
-text = ""
-autowrap_mode = 3
-custom_minimum_size = Vector2(0, 120)
+visible = false
 
 [node name="P2Column" type="VBoxContainer" parent="CharacterSelectScreen/SelectContent/PlayerColumns"]
 size_flags_horizontal = 3
@@ -168,9 +166,7 @@ custom_minimum_size = Vector2(240, 24)
 clip_text = true
 
 [node name="P2PreviewLabel" type="Label" parent="CharacterSelectScreen/SelectContent/PlayerColumns/P2Column"]
-text = ""
-autowrap_mode = 3
-custom_minimum_size = Vector2(0, 120)
+visible = false
 
 [node name="CharacterGrid" type="GridContainer" parent="CharacterSelectScreen/SelectContent"]
 columns = 3

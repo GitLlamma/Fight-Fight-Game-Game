@@ -166,6 +166,7 @@ Responsibilities:
 - character grid tiles use a consistent stylebox footprint with a transparent baseline outline so controller wake/state changes do not cause per-tile size jitter
 - Character Select includes separate P1/P2 lock status panels that display locked/unlocked state and locked fighter name
 - Character Select status/lock labels use fixed-size containers and clipped text to prevent UI stretching/squishing when state text changes
+- Character stat preview text is hidden on Character Select to reduce visual clutter; selection feedback is provided by grid highlights and lock status panels
 - when a controller joins Character Select, the first button press only wakes/assigns that selector and does not perform movement or lock actions
 - joystick motion past deadzone can also wake/assign a controller selector, and that wake motion does not perform cursor movement
 - newly awakened selectors start hovering on Default Fighter in an unlocked state, and idle tiles are visually dimmed to avoid implying pre-selection

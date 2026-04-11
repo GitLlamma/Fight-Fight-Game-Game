@@ -412,8 +412,6 @@ func _refresh_character_previews() -> void:
 	var p2_selected_id: StringName = _get_selected_character_id(p2_character_option)
 	p1_selection_label.text = "P1: %s" % _build_character_select_player_status(1)
 	p2_selection_label.text = "P2: %s" % _build_character_select_player_status(2)
-	p1_preview_label.text = _build_preview_text(p1_selected_id)
-	p2_preview_label.text = _build_preview_text(p2_selected_id)
 	_refresh_lock_status_panels()
 	_refresh_character_grid_visuals()
 
