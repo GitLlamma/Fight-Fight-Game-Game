@@ -22,6 +22,10 @@ signal character_select_requested()
 @onready var p2_selection_label = $CharacterSelectScreen/SelectContent/PlayerColumns/P2Column/P2SelectionLabel
 @onready var p1_preview_label = $CharacterSelectScreen/SelectContent/PlayerColumns/P1Column/P1PreviewLabel
 @onready var p2_preview_label = $CharacterSelectScreen/SelectContent/PlayerColumns/P2Column/P2PreviewLabel
+@onready var p1_lock_panel = $CharacterSelectScreen/SelectContent/LockStatusRow/P1LockPanel
+@onready var p1_lock_label = $CharacterSelectScreen/SelectContent/LockStatusRow/P1LockPanel/P1LockLabel
+@onready var p2_lock_panel = $CharacterSelectScreen/SelectContent/LockStatusRow/P2LockPanel
+@onready var p2_lock_label = $CharacterSelectScreen/SelectContent/LockStatusRow/P2LockPanel/P2LockLabel
 @onready var mouse_owner_p1_button = $CharacterSelectScreen/SelectContent/MouseOwnerRow/MouseOwnerP1Button
 @onready var mouse_owner_p2_button = $CharacterSelectScreen/SelectContent/MouseOwnerRow/MouseOwnerP2Button
 @onready var character_grid = $CharacterSelectScreen/SelectContent/CharacterGrid
@@ -107,6 +111,7 @@ const PLAYER_LOCK_COLOR_P1 := Color(1.0, 0.5, 0.5, 1.0)
 const PLAYER_LOCK_COLOR_P2 := Color(0.55, 0.75, 1.0, 1.0)
 const PLAYER_LOCK_COLOR_BOTH := Color(1.0, 0.55, 1.0, 1.0)
 const CHARACTER_TILE_IDLE_COLOR := Color(0.72, 0.72, 0.72, 1.0)
+const PLAYER_LOCK_PANEL_IDLE_COLOR := Color(0.6, 0.6, 0.6, 1.0)
 const MAIN_MENU_TARGET_START: StringName = &"start"
 const MAIN_MENU_TARGET_CONTROLS: StringName = &"controls"
 const REQUIRED_REBIND_ACTIONS: Array[StringName] = [
@@ -396,6 +401,7 @@ func _refresh_character_previews() -> void:
 	p2_selection_label.text = "P2: %s" % _build_character_select_player_status(2)
 	p1_preview_label.text = _build_preview_text(p1_selected_id)
 	p2_preview_label.text = _build_preview_text(p2_selected_id)
+	_refresh_lock_status_panels()
 	_refresh_character_grid_visuals()
 
 func _on_mouse_owner_p1_button_pressed() -> void:
@@ -426,9 +432,31 @@ func _create_character_grid_button(character_id: StringName, display_name: Strin
 	var tile_button := Button.new()
 	tile_button.text = display_name
 	tile_button.custom_minimum_size = Vector2(120, 64)
+	tile_button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	tile_button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	tile_button.focus_mode = Control.FOCUS_NONE
+	var base_style := _build_character_tile_stylebox(Color(1.0, 1.0, 1.0, 0.0))
+	tile_button.add_theme_stylebox_override("normal", base_style)
+	tile_button.add_theme_stylebox_override("hover", base_style.duplicate())
+	tile_button.add_theme_stylebox_override("pressed", base_style.duplicate())
+	tile_button.add_theme_stylebox_override("focus", base_style.duplicate())
 	tile_button.pressed.connect(_on_character_grid_tile_pressed.bind(character_id))
 	character_grid.add_child(tile_button)
 	character_grid_buttons.append(tile_button)
+
+func _build_character_tile_stylebox(border_color: Color) -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.2, 0.2, 0.2, 0.35)
+	style.border_width_left = 2
+	style.border_width_top = 2
+	style.border_width_right = 2
+	style.border_width_bottom = 2
+	style.border_color = border_color
+	style.corner_radius_top_left = 4
+	style.corner_radius_top_right = 4
+	style.corner_radius_bottom_right = 4
+	style.corner_radius_bottom_left = 4
+	return style
 
 func _on_character_grid_tile_pressed(character_id: StringName) -> void:
 	var cursor_index: int = _find_character_index(character_id)
@@ -458,11 +486,9 @@ func _build_character_select_player_status(player_number: int) -> String:
 	if state.is_empty() or not bool(state.get("active", false)):
 		return "inactive (press any button to join)"
 
-	var cursor_index: int = int(state.get("cursor_index", 0))
-	var cursor_name: String = _get_character_name_for_index(cursor_index)
 	if bool(state.get("locked", false)):
-		return "locked on %s (B to unlock)" % cursor_name
-	return "hovering %s (A to lock)" % cursor_name
+		return "locked (B to unlock)"
+	return "hovering (A to lock)"
 
 func _reset_character_select_player_state() -> void:
 	character_select_player_state.clear()
@@ -726,17 +752,18 @@ func _refresh_character_grid_visuals() -> void:
 		elif p2_cursor:
 			tile.self_modulate = PLAYER_CURSOR_COLOR_P2
 
-		var marker := ""
-		if p1_locked:
-			marker += " [P1 LOCK]"
-		elif p1_cursor:
-			marker += " [P1]"
-		if p2_locked:
-			marker += " [P2 LOCK]"
-		elif p2_cursor:
-			marker += " [P2]"
-		var base_label: String = character_display_names_by_index[index] if index < character_display_names_by_index.size() else tile.text
-		tile.text = "%s%s" % [base_label, marker]
+		if index < character_display_names_by_index.size():
+			tile.text = character_display_names_by_index[index]
+
+func _refresh_lock_status_panels() -> void:
+	var p1_locked: bool = _is_character_player_locked(1)
+	var p2_locked: bool = _is_character_player_locked(2)
+
+	p1_lock_label.text = "P1 LOCKED" if p1_locked else "P1 UNLOCKED"
+	p2_lock_label.text = "P2 LOCKED" if p2_locked else "P2 UNLOCKED"
+
+	p1_lock_panel.self_modulate = PLAYER_LOCK_COLOR_P1 if p1_locked else PLAYER_LOCK_PANEL_IDLE_COLOR
+	p2_lock_panel.self_modulate = PLAYER_LOCK_COLOR_P2 if p2_locked else PLAYER_LOCK_PANEL_IDLE_COLOR
 
 func _get_character_name_for_index(index: int) -> String:
 	if index < 0 or index >= character_ids_by_index.size():
@@ -1321,8 +1348,8 @@ func _focus_default_for_visible_menu() -> void:
 		_focus_default_controls_menu_item()
 		return
 	if character_select_screen.visible:
-		if get_viewport().gui_get_focus_owner() == null and character_grid_buttons.size() > 0:
-			character_grid_buttons[0].grab_focus()
+		if get_viewport().gui_get_focus_owner() == null:
+			back_to_main_menu_button.grab_focus()
 		return
 	if win_screen.visible:
 		if get_viewport().gui_get_focus_owner() == null:

@@ -142,6 +142,8 @@ visible = false
 [node name="P1SelectionLabel" type="Label" parent="CharacterSelectScreen/SelectContent/PlayerColumns/P1Column"]
 text = "Current: -"
 horizontal_alignment = 1
+custom_minimum_size = Vector2(240, 24)
+clip_text = true
 
 [node name="P1PreviewLabel" type="Label" parent="CharacterSelectScreen/SelectContent/PlayerColumns/P1Column"]
 text = ""
@@ -162,6 +164,8 @@ visible = false
 [node name="P2SelectionLabel" type="Label" parent="CharacterSelectScreen/SelectContent/PlayerColumns/P2Column"]
 text = "Current: -"
 horizontal_alignment = 1
+custom_minimum_size = Vector2(240, 24)
+clip_text = true
 
 [node name="P2PreviewLabel" type="Label" parent="CharacterSelectScreen/SelectContent/PlayerColumns/P2Column"]
 text = ""
@@ -172,6 +176,26 @@ custom_minimum_size = Vector2(0, 120)
 columns = 3
 theme_override_constants/h_separation = 8
 theme_override_constants/v_separation = 8
+
+[node name="LockStatusRow" type="HBoxContainer" parent="CharacterSelectScreen/SelectContent"]
+alignment = 1
+theme_override_constants/separation = 12
+
+[node name="P1LockPanel" type="PanelContainer" parent="CharacterSelectScreen/SelectContent/LockStatusRow"]
+custom_minimum_size = Vector2(240, 36)
+
+[node name="P1LockLabel" type="Label" parent="CharacterSelectScreen/SelectContent/LockStatusRow/P1LockPanel"]
+horizontal_alignment = 1
+text = "P1 Unlocked"
+clip_text = true
+
+[node name="P2LockPanel" type="PanelContainer" parent="CharacterSelectScreen/SelectContent/LockStatusRow"]
+custom_minimum_size = Vector2(240, 36)
+
+[node name="P2LockLabel" type="Label" parent="CharacterSelectScreen/SelectContent/LockStatusRow/P2LockPanel"]
+horizontal_alignment = 1
+text = "P2 Unlocked"
+clip_text = true
 
 [node name="HintLabel" type="Label" parent="CharacterSelectScreen/SelectContent"]
 text = "Pick fighters, then start the match. Use Mouse Controls to choose whether clicks assign to P1 or P2."

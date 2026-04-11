@@ -161,7 +161,11 @@ Responsibilities:
 - mouse ownership is explicit in Character Select via P1/P2 owner toggle buttons; mouse clicks on grid tiles assign to the selected owner
 - in Character Select, controllers join per player slot by pressing any button on an inactive controller (currently supports 2 slots, architecture is map-based for future expansion)
 - each active controller gets an independent non-wrapping cursor on the grid; D-pad/left stick move the cursor within bounds, A locks selection, B unlocks selection
-- grid tiles visually show per-player cursor/lock state using color and label markers ([P1], [P2], [P1 LOCK], [P2 LOCK])
+- grid tiles visually show per-player cursor/lock state using color highlights only (no per-tile marker text)
+- character grid tiles are non-focusable in UI navigation to avoid persistent focus outlines; selection state is communicated only through custom color/status visuals
+- character grid tiles use a consistent stylebox footprint with a transparent baseline outline so controller wake/state changes do not cause per-tile size jitter
+- Character Select includes separate P1/P2 lock status panels that display locked/unlocked state and locked fighter name
+- Character Select status/lock labels use fixed-size containers and clipped text to prevent UI stretching/squishing when state text changes
 - when a controller joins Character Select, the first button press only wakes/assigns that selector and does not perform movement or lock actions
 - joystick motion past deadzone can also wake/assign a controller selector, and that wake motion does not perform cursor movement
 - newly awakened selectors start hovering on Default Fighter in an unlocked state, and idle tiles are visually dimmed to avoid implying pre-selection
