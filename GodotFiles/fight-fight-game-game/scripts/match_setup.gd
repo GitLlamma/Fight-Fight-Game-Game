@@ -12,8 +12,8 @@ var default_player_character_ids := {
 	2: DEFAULT_CHARACTER_ID,
 }
 var default_player_input_modes := {
-	1: INPUT_MODE_KEYBOARD,
-	2: INPUT_MODE_KEYBOARD,
+	1: INPUT_MODE_CONTROLLER,
+	2: INPUT_MODE_CONTROLLER,
 }
 var default_player_controller_device_ids := {
 	1: CONTROLLER_DEVICE_AUTO_ID,
@@ -93,7 +93,7 @@ func set_player_selection(player_number: int, character_id: StringName, skin_id:
 func set_player_input_mode(player_number: int, input_mode: StringName) -> void:
 	selected_input_modes[player_number] = _sanitize_input_mode(input_mode)
 
-func get_player_input_mode(player_number: int, fallback_mode: StringName = INPUT_MODE_KEYBOARD) -> StringName:
+func get_player_input_mode(player_number: int, fallback_mode: StringName = INPUT_MODE_CONTROLLER) -> StringName:
 	if selected_input_modes.has(player_number):
 		return selected_input_modes[player_number]
 	if default_player_input_modes.has(player_number):

@@ -224,8 +224,8 @@ func _resolve_controller_device_for_player(player_number: int, selected_input_mo
 func _get_player_input_mode(player_number: int) -> StringName:
 	var match_setup: Node = get_node_or_null(MATCH_SETUP_NODE_PATH)
 	if match_setup == null:
-		return INPUT_MODE_KEYBOARD
-	return match_setup.get_player_input_mode(player_number, INPUT_MODE_KEYBOARD)
+		return INPUT_MODE_CONTROLLER
+	return match_setup.get_player_input_mode(player_number, INPUT_MODE_CONTROLLER)
 
 func _get_preferred_controller_device_id(player_number: int) -> int:
 	var match_setup: Node = get_node_or_null(MATCH_SETUP_NODE_PATH)

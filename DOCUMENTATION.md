@@ -65,6 +65,7 @@ This includes:
 Control defaults source of truth:
 - Default input mappings are defined in `project.godot` under `[input]`.
 - Runtime controls UI reads and remaps existing `InputMap` actions, and warns if required actions are missing.
+- Default per-player input mode selection is Controller (even when no controllers are connected).
 
 Current default controls from the input map:
 - Player 1: `A/D` move, `W` aim up, `S` aim down, `Space` jump, `T` attack
@@ -152,6 +153,39 @@ Responsibilities:
 - controls screen now shows a warning when both players in controller mode could end up sharing a single controller
 - character select now blocks Start Match when both players in controller mode do not resolve to separate connected controllers
 - gameplay now pauses on controller disconnect and shows a reconnect prompt until controller input is recovered
+- menus now support controller navigation (left stick and D-pad), confirmation (A), and back/cancel (B)
+- when a controller is connected, Main Menu defaults focus to Start and shows it in a selected visual state
+- Controls menu defaults focus to the current tab's active Input Mode button (Keyboard or Controller)
+- in Controls, controller LB/RB switches between Player 1 and Player 2 tabs and applies focus to the active tab's Input Mode button
+- Character Select now uses an icon-grid scaffold instead of visible dropdowns; the old OptionButton data path remains internally for temporary compatibility during migration
+- mouse ownership is explicit in Character Select via P1/P2 owner toggle buttons; mouse clicks on grid tiles assign to the selected owner
+- in Character Select, controllers join per player slot by pressing any button on an inactive controller (currently supports 2 slots, architecture is map-based for future expansion)
+- each active controller gets an independent non-wrapping cursor on the grid; D-pad/left stick move the cursor within bounds, A locks selection, B unlocks selection
+- grid tiles visually show per-player cursor/lock state using color highlights only (no per-tile marker text)
+- character grid tiles are non-focusable in UI navigation to avoid persistent focus outlines; selection state is communicated only through custom color/status visuals
+- character grid tiles use a consistent stylebox footprint with a transparent baseline outline so controller wake/state changes do not cause per-tile size jitter
+- Character Select includes separate P1/P2 lock status panels that display locked/unlocked state and locked fighter name
+- Character Select status/lock labels use fixed-size containers and clipped text to prevent UI stretching/squishing when state text changes
+- Character stat preview UI and related update logic were removed from Character Select to reduce visual clutter; selection feedback is provided by grid highlights and lock status panels
+- top Player 1 / Player 2 status labels were removed from Character Select; all selector state messaging now lives in the two lock status panels
+- lock status panels show: "Press any button to join" when inactive and "P1 <fighter name>" / "P2 <fighter name>" when active; lock state is indicated by panel color (red P1, blue P2)
+- lock panel colors are tuned for high contrast (dark neutral when unlocked, saturated red/blue when locked) to make selection state immediately visible
+- lock panel color contrast is enforced with explicit panel stylebox backgrounds/borders (not just modulation tint), improving visibility across theme variations
+- lock panel visuals cache prebuilt styleboxes per player/state and only swap overrides on lock-state transitions, reducing allocation and UI churn during frequent refreshes
+- lock panels display the currently hovered fighter name for active players, and play a slight pulse animation when lock-in happens
+- when a player locks in a fighter, that player's cursor highlight is removed from the grid; pressing B restores the cursor at their previously selected fighter
+- Character Select layout was compacted after stat/status removals: core rows are centered and the character grid now claims the main vertical space to avoid large empty gaps
+- Match Setup (Character Select) now uses a responsive 90% viewport panel layout
+- join/lock status panels use a tall portrait-style ratio (~3:2 height-to-width), with player text bottom-centered for future fighter portrait visuals
+- Character Select hint text updates dynamically: it shows "CHOOSE YOUR CHARACTER" by default and switches to "PRESS START/ENTER" only after both players have explicitly selected fighters
+- when a controller joins Character Select, the first button press only wakes/assigns that selector and does not perform movement or lock actions
+- joystick motion past deadzone can also wake/assign a controller selector, and that wake motion does not perform cursor movement
+- newly awakened selectors start hovering on Default Fighter in an unlocked state, and idle tiles are visually dimmed to avoid implying pre-selection
+- Mouse Controls owner toggles are mouse-only (not controller-focusable)
+- in Character Select, controller input is isolated to fighter cursor/lock logic and does not drive generic UI focus navigation
+- in Character Select, either active controller can press Start to begin the match once all player slots are active and locked
+- Start Match button is hidden in Character Select; keyboard/mouse flow starts match with Enter once both players have valid character selections
+- in Character Select, B is contextual: if the player is locked it unlocks, otherwise it navigates back to Main Menu
 - controls tab titles are set in script from translation keys to support future localization
 - full-screen placeholder background shown behind the controls screen
 - per-player segmented switch (Keyboard or Controller) with active/inactive visual state
