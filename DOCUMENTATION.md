@@ -125,10 +125,12 @@ The HUD and menu scene.
 Responsibilities:
 - player health display
 - main menu with Start and Controls navigation
+- full-screen placeholder background shown behind the main menu
 - win screen
 - rematch and return-to-select buttons
 - character select interface with Start and Back navigation
 - controls setup UI screen (layout only, remapping logic pending)
+- full-screen placeholder background shown behind the controls screen
 
 ### scripts/
 Stores the main GDScript gameplay logic.

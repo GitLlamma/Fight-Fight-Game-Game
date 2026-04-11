@@ -6,6 +6,7 @@ signal character_select_requested()
 
 @onready var p1_health_label = $VBoxContainer/P1HealthLabel
 @onready var p2_health_label = $VBoxContainer/P2HealthLabel
+@onready var main_menu_background = $MainMenuBackground
 @onready var main_menu_screen = $MainMenuScreen
 @onready var main_menu_start_button = $MainMenuScreen/MainMenuContent/StartButton
 @onready var main_menu_controls_button = $MainMenuScreen/MainMenuContent/ControlsButton
@@ -21,6 +22,7 @@ signal character_select_requested()
 @onready var p2_preview_label = $CharacterSelectScreen/SelectScroll/SelectContent/P2PreviewLabel
 @onready var start_match_button = $CharacterSelectScreen/SelectScroll/SelectContent/StartMatchButton
 @onready var back_to_main_menu_button = $CharacterSelectScreen/SelectScroll/SelectContent/BackToMainMenuButton
+@onready var controls_background = $ControlsBackground
 @onready var controls_screen = $ControlsScreen
 @onready var controls_back_button = $ControlsScreen/ControlsScroll/ControlsContent/BackButton
 
@@ -31,9 +33,11 @@ var cached_default_p1: StringName = &"default_fighter"
 var cached_default_p2: StringName = &"default_fighter"
 
 func _ready():
+	main_menu_background.hide()
 	main_menu_screen.hide()
 	win_screen.hide()
 	character_select_screen.hide()
+	controls_background.hide()
 	controls_screen.hide()
 	main_menu_start_button.pressed.connect(_on_main_menu_start_button_pressed)
 	main_menu_controls_button.pressed.connect(_on_main_menu_controls_button_pressed)
@@ -61,21 +65,27 @@ func hide_winner() -> void:
 
 func show_main_menu(character_options: Array, default_p1: StringName, default_p2: StringName) -> void:
 	cache_character_select_data(character_options, default_p1, default_p2)
+	main_menu_background.show()
 	main_menu_screen.show()
+	controls_background.hide()
 	controls_screen.hide()
 	character_select_screen.hide()
 	hide_winner()
 
 func hide_main_menu() -> void:
+	main_menu_background.hide()
 	main_menu_screen.hide()
 
 func show_controls_screen() -> void:
+	controls_background.show()
 	controls_screen.show()
+	main_menu_background.hide()
 	main_menu_screen.hide()
 	character_select_screen.hide()
 	hide_winner()
 
 func hide_controls_screen() -> void:
+	controls_background.hide()
 	controls_screen.hide()
 
 func cache_character_select_data(character_options: Array, default_p1: StringName, default_p2: StringName) -> void:
@@ -85,7 +95,9 @@ func cache_character_select_data(character_options: Array, default_p1: StringNam
 
 func show_character_select(character_options: Array, default_p1: StringName, default_p2: StringName) -> void:
 	cache_character_select_data(character_options, default_p1, default_p2)
+	main_menu_background.hide()
 	main_menu_screen.hide()
+	controls_background.hide()
 	controls_screen.hide()
 	character_select_screen.show()
 	hide_winner()
@@ -164,8 +176,7 @@ func _on_main_menu_controls_button_pressed() -> void:
 	show_controls_screen()
 
 func _on_controls_back_button_pressed() -> void:
-	main_menu_screen.show()
-	controls_screen.hide()
+	show_main_menu(cached_character_options, cached_default_p1, cached_default_p2)
 
 func _on_back_to_main_menu_button_pressed() -> void:
 	show_main_menu(cached_character_options, cached_default_p1, cached_default_p2)
