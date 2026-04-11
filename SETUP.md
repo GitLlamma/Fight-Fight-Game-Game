@@ -180,7 +180,7 @@ To enable GDScript autocompletion with the **godot-tools** extension:
 
 Current defaults are configured in `GodotFiles/fight-fight-game-game/project.godot`.
 
-- Player 1: `A/D` move, `W` aim up, `Space` jump, `T` attack
+- Player 1: `A/D` move, `W` aim up, `S` aim down, `Space` jump, `T` attack
 - Player 2: `J/L` move, `I` aim up, `K` aim down, `O` jump, `P` attack
 
 Important behavior:

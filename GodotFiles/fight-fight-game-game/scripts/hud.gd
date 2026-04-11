@@ -683,29 +683,39 @@ func _refresh_start_match_availability() -> void:
 	if character_select_start_warning_label == null:
 		return
 
-	var can_start: bool = _is_controller_assignment_valid_for_match_start()
+	var controller_assignment_error: String = _get_match_start_controller_assignment_error()
+	var can_start: bool = controller_assignment_error.is_empty()
 	start_match_button.disabled = not can_start
 	if can_start:
 		character_select_start_warning_label.hide()
 		return
 
-	character_select_start_warning_label.text = "Cannot start: both players in controller mode must be assigned different connected controllers."
+	character_select_start_warning_label.text = controller_assignment_error
 	character_select_start_warning_label.self_modulate = COLOR_STATUS_WARN
 	character_select_start_warning_label.show()
 
-func _is_controller_assignment_valid_for_match_start() -> bool:
-	if not p1_uses_controller or not p2_uses_controller:
-		return true
-
+func _get_match_start_controller_assignment_error() -> String:
 	var connected_devices: PackedInt32Array = Input.get_connected_joypads()
-	if connected_devices.size() < 2:
-		return false
+	var p1_device: int = -1
+	var p2_device: int = -1
 
-	var p1_device: int = _resolve_controller_device_for_player(1, connected_devices)
-	var p2_device: int = _resolve_controller_device_for_player(2, connected_devices)
-	if p1_device < 0 or p2_device < 0:
-		return false
-	return p1_device != p2_device
+	if p1_uses_controller:
+		p1_device = _resolve_controller_device_for_player(1, connected_devices)
+		if p1_device < 0:
+			return "Cannot start: Player 1 is set to controller mode but no connected controller is assigned."
+
+	if p2_uses_controller:
+		p2_device = _resolve_controller_device_for_player(2, connected_devices)
+		if p2_device < 0:
+			return "Cannot start: Player 2 is set to controller mode but no connected controller is assigned."
+
+	if p1_uses_controller and p2_uses_controller and p1_device == p2_device:
+		return "Cannot start: both players in controller mode must be assigned different connected controllers."
+
+	return ""
+
+func _is_controller_assignment_valid_for_match_start() -> bool:
+	return _get_match_start_controller_assignment_error().is_empty()
 
 func show_controller_reconnect_prompt(waiting_players: Array[int]) -> void:
 	if controller_reconnect_overlay == null:

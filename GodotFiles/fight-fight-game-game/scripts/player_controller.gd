@@ -53,7 +53,7 @@ const INPUT_MODE_CONTROLLER: StringName = &"controller"
 @export var attack_damage = 10.0
 @export var attack_cooldown = 0.5
 @export var damage_flash_duration = 0.12
-@export var show_directional_intent_debug := true
+@export var show_directional_intent_debug := false
 @export var controller_axis_deadzone := 0.4
 @export var controller_jump_button: JoyButton = JOY_BUTTON_A
 @export var controller_attack_button: JoyButton = JOY_BUTTON_X
@@ -326,15 +326,8 @@ func _build_input_intent(raw_input: Dictionary) -> InputIntent:
 	intent.move_axis = _axis_from_directions(left_held, right_held)
 
 	# Prioritize vertical directional intent for attacks over horizontal intent.
-	var vertical_axis: int = 0
-	if up_held and not down_held:
-		vertical_axis = -1
-	elif down_held and not up_held:
-		vertical_axis = 1
-	elif down_held:
-		vertical_axis = 1
-	elif up_held:
-		vertical_axis = -1
+	# Tie-break rule: if both up and down are held, prefer down.
+	var vertical_axis: int = _resolve_vertical_axis(up_held, down_held)
 
 	var horizontal_attack_axis: int = 0 if vertical_axis != 0 else intent.move_axis
 	intent.directional_intent = Vector2i(horizontal_attack_axis, vertical_axis)
@@ -348,6 +341,15 @@ func _axis_from_directions(negative: bool, positive: bool) -> int:
 	if negative == positive:
 		return 0
 	return -1 if negative else 1
+
+func _resolve_vertical_axis(up_held: bool, down_held: bool) -> int:
+	if down_held and up_held:
+		return 0
+	if up_held:
+		return -1
+	if down_held:
+		return 1
+	return 0
 
 func _ensure_move_executor():
 	if move_executor:
@@ -443,7 +445,7 @@ func _perform_double_jump(input_dir: int):
 		var burst_acceleration: float = double_jump_reverse_burst_acceleration if turning_around else double_jump_burst_acceleration
 		velocity.x = move_toward(velocity.x, target_speed, burst_acceleration)
 
-func _configure_attack_hitbox_for_move(move_data: MoveData, is_grounded: bool, directional_intent: Vector2i) -> void:
+func _configure_attack_hitbox_for_move(_move_data: MoveData, is_grounded: bool, directional_intent: Vector2i) -> void:
 	if attack_collision == null:
 		return
 
@@ -612,7 +614,7 @@ func configure_input_source(selected_input_mode: StringName, selected_device_id:
 	previous_controller_attack_held = false
 
 func configure_controller_bindings(jump_button: int, attack_button: int) -> void:
-	controller_jump_button = jump_button
-	controller_attack_button = attack_button
+	controller_jump_button = jump_button as JoyButton
+	controller_attack_button = attack_button as JoyButton
 	previous_controller_jump_held = false
 	previous_controller_attack_held = false

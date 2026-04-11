@@ -15,8 +15,8 @@ func get_player1_input():
 
 func get_player2_input():
 	var input = {
-		"left": Input.is_action_pressed("ui_left_p2") or Input.is_action_pressed("ui_left"),
-		"right": Input.is_action_pressed("ui_right_p2") or Input.is_action_pressed("ui_right"),
+		"left": Input.is_action_pressed("ui_left_p2"),
+		"right": Input.is_action_pressed("ui_right_p2"),
 		"jump": Input.is_action_just_pressed("jump_p2"),
 		"attack": Input.is_action_just_pressed("attack_p2")
 	}

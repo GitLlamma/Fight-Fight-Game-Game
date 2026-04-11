@@ -67,7 +67,7 @@ Control defaults source of truth:
 - Runtime controls UI reads and remaps existing `InputMap` actions, and warns if required actions are missing.
 
 Current default controls from the input map:
-- Player 1: `A/D` move, `W` aim up, `Space` jump, `T` attack
+- Player 1: `A/D` move, `W` aim up, `S` aim down, `Space` jump, `T` attack
 - Player 2: `J/L` move, `I` aim up, `K` aim down, `O` jump, `P` attack
 
 Jump behavior note:
