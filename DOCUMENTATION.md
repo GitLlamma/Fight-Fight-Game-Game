@@ -133,8 +133,11 @@ Responsibilities:
 - win screen
 - rematch and return-to-select buttons
 - character select interface with Player 1 (left) and Player 2 (right) columns plus Start and Back actions
+- character select Back action is positioned at the top-left of the panel for faster navigation
+- character select Start Match action is positioned below the panel as a separate button
 - full-screen placeholder background shown behind the character select screen
 - controls setup UI screen with separate Player 1 and Player 2 tabs
+- controls screen Back action is positioned at the top-left of the panel for consistency with character select
 - keyboard remapping for per-player actions (left, right, up, down, jump, attack) via click-then-press-key flow
 - controller mode now routes gameplay movement directions (left, right, up, down intent) from the assigned joypad
 - controller mode now also handles jump and attack with default face-button mappings

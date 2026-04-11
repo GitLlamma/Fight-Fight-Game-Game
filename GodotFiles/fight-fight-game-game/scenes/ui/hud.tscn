@@ -155,10 +155,22 @@ autowrap_mode = 3
 alignment = 1
 theme_override_constants/separation = 12
 
-[node name="BackToMainMenuButton" type="Button" parent="CharacterSelectScreen/SelectContent/SelectActions"]
+[node name="BackToMainMenuButton" type="Button" parent="CharacterSelectBackground"]
+offset_left = 10.0
+offset_top = 10.0
+offset_right = 70.0
+offset_bottom = 41.0
 text = "Back"
 
-[node name="StartMatchButton" type="Button" parent="CharacterSelectScreen/SelectContent/SelectActions"]
+[node name="StartMatchButton" type="Button" parent="CharacterSelectBackground"]
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -70.0
+offset_top = 205.0
+offset_right = 70.0
+offset_bottom = 236.0
 text = "Start Match"
 
 [node name="ControlsBackground" type="ColorRect" parent="."]
@@ -409,7 +421,11 @@ visible = false
 text = "Controller assignment warning"
 autowrap_mode = 3
 
-[node name="BackButton" type="Button" parent="ControlsScreen/ControlsContent"]
+[node name="BackButton" type="Button" parent="ControlsBackground"]
+offset_left = 10.0
+offset_top = 10.0
+offset_right = 70.0
+offset_bottom = 41.0
 text = "Back"
 
 [node name="ControllerReconnectOverlay" type="PanelContainer" parent="."]

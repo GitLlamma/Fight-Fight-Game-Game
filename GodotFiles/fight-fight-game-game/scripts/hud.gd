@@ -21,14 +21,14 @@ signal character_select_requested()
 @onready var p1_preview_label = $CharacterSelectScreen/SelectContent/PlayerColumns/P1Column/P1PreviewLabel
 @onready var p2_preview_label = $CharacterSelectScreen/SelectContent/PlayerColumns/P2Column/P2PreviewLabel
 @onready var character_select_start_warning_label = $CharacterSelectScreen/SelectContent/StartWarningLabel
-@onready var start_match_button = $CharacterSelectScreen/SelectContent/SelectActions/StartMatchButton
-@onready var back_to_main_menu_button = $CharacterSelectScreen/SelectContent/SelectActions/BackToMainMenuButton
+@onready var start_match_button = $CharacterSelectBackground/StartMatchButton
+@onready var back_to_main_menu_button = $CharacterSelectBackground/BackToMainMenuButton
 @onready var controller_reconnect_overlay = $ControllerReconnectOverlay
 @onready var controller_reconnect_body_label = $ControllerReconnectOverlay/ReconnectContent/ReconnectBodyLabel
 @onready var controls_background = $ControlsBackground
 @onready var controls_screen = $ControlsScreen
 @onready var controls_player_tabs = $ControlsScreen/ControlsContent/PlayerTabs
-@onready var controls_back_button = $ControlsScreen/ControlsContent/BackButton
+@onready var controls_back_button = $ControlsBackground/BackButton
 @onready var p1_keyboard_input_button = $ControlsScreen/ControlsContent/PlayerTabs/Player1Tab/P1InputModeRow/P1InputModeSwitch/KeyboardButton
 @onready var p1_controller_input_button = $ControlsScreen/ControlsContent/PlayerTabs/Player1Tab/P1InputModeRow/P1InputModeSwitch/ControllerButton
 @onready var p1_controller_status_label = $ControlsScreen/ControlsContent/PlayerTabs/Player1Tab/P1ControllerStatusLabel
