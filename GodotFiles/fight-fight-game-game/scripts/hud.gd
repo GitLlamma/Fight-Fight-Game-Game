@@ -549,8 +549,8 @@ func _load_input_modes_from_match_setup() -> void:
 	if match_setup == null:
 		return
 
-	p1_uses_controller = match_setup.get_player_input_mode(1, INPUT_MODE_KEYBOARD) == INPUT_MODE_CONTROLLER
-	p2_uses_controller = match_setup.get_player_input_mode(2, INPUT_MODE_KEYBOARD) == INPUT_MODE_CONTROLLER
+	p1_uses_controller = match_setup.get_player_input_mode(1, INPUT_MODE_CONTROLLER) == INPUT_MODE_CONTROLLER
+	p2_uses_controller = match_setup.get_player_input_mode(2, INPUT_MODE_CONTROLLER) == INPUT_MODE_CONTROLLER
 
 func _save_input_modes_to_match_setup() -> void:
 	var match_setup: Node = get_node_or_null(MATCH_SETUP_NODE_PATH)

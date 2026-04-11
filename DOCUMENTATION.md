@@ -65,6 +65,7 @@ This includes:
 Control defaults source of truth:
 - Default input mappings are defined in `project.godot` under `[input]`.
 - Runtime controls UI reads and remaps existing `InputMap` actions, and warns if required actions are missing.
+- Default per-player input mode selection is Controller (even when no controllers are connected).
 
 Current default controls from the input map:
 - Player 1: `A/D` move, `W` aim up, `S` aim down, `Space` jump, `T` attack
