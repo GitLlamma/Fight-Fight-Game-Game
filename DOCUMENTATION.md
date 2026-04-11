@@ -68,7 +68,7 @@ Control defaults source of truth:
 
 Current default controls from the input map:
 - Player 1: `A/D` move, `W` aim up, `Space` jump, `T` attack
-- Player 2: `Left/Right` move, `Up Arrow` aim up, `O` jump, `P` attack
+- Player 2: `J/L` move, `I` aim up, `K` aim down, `O` jump, `P` attack
 
 Jump behavior note:
 - Jumping is triggered only by dedicated jump actions (`jump_p1` and `jump_p2`).
@@ -178,6 +178,12 @@ Responsibilities:
 - movement and physics
 - jump logic, double jump, and fast fall
 - attack input and move resolution
+- directional aerial attacks with placeholder hitboxes for up/down/forward/back input
+- directional aerial attack intent is vertical-first when horizontal and vertical are both held
+- directional intent uses each player's dedicated mapped actions (no shared fallback actions)
+- neutral aerial attack uses a small all-around placeholder hitbox centered on the player
+- placeholder aerial hitbox layout is tuned separately per character profile (default and speed)
+- optional temporary Label2D debug text can display each player's directional attack intent vector in real time
 - hit detection and damage
 - animation state and visual feedback
 - prevents inherited platform-velocity boosts when fighters stack on top of each other
