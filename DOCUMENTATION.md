@@ -235,12 +235,12 @@ Responsibilities:
 - jump logic, double jump, and fast fall
 - attack input and move resolution with grounded vs aerial differentiation
 - directional grounded attacks with shorter cooldowns than aerials and directional hitbox coverage:
-  - neutral grounded: quick jab directly in front (64×44 px default, 54×40 px speed)
-  - forward grounded: extended reaching strike (116×56 px default, 104×48 px speed)
-  - up grounded: tall upward arc hitting above (56×92 px default, 48×80 px speed)
-  - down grounded: low horizontal strike (88×40 px default, 80×36 px speed)
-  - back grounded: shorter backward strike (96×56 px default, 88×48 px speed)
-- grounded hitbox placement respects character-specific optimizations for default vs speed fighters
+  - neutral grounded: quick jab directly in front (0.12s cooldown default, 0.10s speed)
+  - forward/up/down/back grounded: directional strikes (0.25s cooldown default, 0.20s speed)
+  - grounded endlag reduced for snappy feel (4-7 frames default, 3-5 frames speed)
+- directional aerial attacks with shorter endlag than before:
+  - all aerial attacks: 0.35s cooldown default, 0.28s speed (down from 0.5s/0.42s)
+  - endlag reduced to 8 frames for all aerials (down from 12)
 - directional aerial attacks with placeholder hitboxes for up/down/forward/back input
 - directional aerial attack intent is vertical-first when horizontal and vertical are both held
 - directional intent uses each player's dedicated mapped actions (no shared fallback actions)
