@@ -1,11 +1,11 @@
-[gd_resource type="Resource" script_class="CharacterData" load_steps=16 format=3]
+[gd_resource type="Resource" script_class="CharacterData" format=3 uid="uid://p4ocky131d68"]
 
-[ext_resource type="Script" path="res://scripts/characters/character_data.gd" id="1"]
-[ext_resource type="Resource" path="res://characters/moves/default_neutral.tres" id="2"]
-[ext_resource type="Resource" path="res://characters/moves/default_up.tres" id="3"]
-[ext_resource type="Resource" path="res://characters/moves/default_down.tres" id="4"]
-[ext_resource type="Resource" path="res://characters/moves/default_forward.tres" id="5"]
-[ext_resource type="Resource" path="res://characters/moves/default_back.tres" id="6"]
+[ext_resource type="Script" uid="uid://7fcjxeyjqh1k" path="res://scripts/characters/character_data.gd" id="1"]
+[ext_resource type="Resource" uid="uid://b7182hvjjm7q" path="res://characters/moves/default_neutral.tres" id="2"]
+[ext_resource type="Resource" uid="uid://0jhai158fu6e" path="res://characters/moves/default_up.tres" id="3"]
+[ext_resource type="Resource" uid="uid://baddv7okp14em" path="res://characters/moves/default_down.tres" id="4"]
+[ext_resource type="Resource" uid="uid://dtmuos8bwqttd" path="res://characters/moves/default_forward.tres" id="5"]
+[ext_resource type="Resource" uid="uid://ipkouyq761j2" path="res://characters/moves/default_back.tres" id="6"]
 [ext_resource type="Resource" path="res://characters/moves/default_ground_neutral.tres" id="7"]
 [ext_resource type="Resource" path="res://characters/moves/default_ground_up.tres" id="8"]
 [ext_resource type="Resource" path="res://characters/moves/default_ground_down.tres" id="9"]
@@ -14,40 +14,6 @@
 
 [resource]
 script = ExtResource("1")
-character_id = &"default_fighter"
-display_name = "Default Fighter"
-weight = 1.0
-strength_multiplier = 1.0
-max_health = 100.0
-speed = 400.0
-ground_acceleration = 3000.0
-ground_deceleration = 2500.0
-air_acceleration = 850.0
-air_deceleration = 350.0
-air_release_deceleration = 700.0
-air_reverse_acceleration = 1100.0
-max_air_speed_factor = 0.92
-max_air_reverse_speed_factor = 0.72
-jump_force = -600.0
-max_jumps = 2
-double_jump_force = -560.0
-double_jump_hold_factor = 0.55
-double_jump_control_time = 0.25
-double_jump_air_acceleration = 1250.0
-double_jump_air_reverse_acceleration = 1450.0
-double_jump_direction_speed_factor = 0.9
-double_jump_burst_acceleration = 220.0
-double_jump_reverse_burst_acceleration = 360.0
-gravity = 2000.0
-max_fall_speed = 950.0
-fast_fall_speed = 1450.0
-fast_fall_gravity_multiplier = 1.5
-max_jump_hold_time = 0.13
-held_jump_gravity_multiplier = 0.31
-short_hop_velocity_multiplier = 0.62
-attack_damage = 10.0
-attack_cooldown = 0.5
-damage_flash_duration = 0.12
 ground_neutral_move = ExtResource("7")
 ground_up_move = ExtResource("8")
 ground_down_move = ExtResource("9")

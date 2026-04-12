@@ -120,6 +120,7 @@ The reusable player scene.
 
 Responsibilities:
 - player body and collision
+- mirrored rounded back-side marker with slight outward bulge so facing direction is obvious in motion
 - attack hitbox
 - debug hitbox visuals
 - move executor child node
@@ -230,13 +231,16 @@ Controls the player character.
 
 Responsibilities:
 - movement and physics
+- facing direction only changes while grounded; aerial facing is locked until landing
 - supports controller-driven movement directions when controller mode is selected
 - supports controller-driven jump and attack with default button mappings when controller mode is selected
 - jump logic, double jump, and fast fall
+- double jump supports normal in-air movement steering (including reversals), while facing direction remains locked until landing
 - attack input and move resolution with grounded vs aerial differentiation
 - directional grounded attacks with shorter cooldowns than aerials and directional hitbox coverage:
   - neutral grounded: quick jab directly in front (0.12s cooldown default, 0.10s speed)
-  - forward/up/down/back grounded: directional strikes (0.25s cooldown default, 0.20s speed)
+  - forward/up/down grounded: directional strikes (0.25s cooldown default, 0.20s speed)
+  - grounded back attack is disabled; back+attack on ground falls back to neutral grounded attack
   - grounded endlag reduced for snappy feel (4-7 frames default, 3-5 frames speed)
 - directional aerial attacks with shorter endlag than before:
   - all aerial attacks: 0.35s cooldown default, 0.28s speed (down from 0.5s/0.42s)

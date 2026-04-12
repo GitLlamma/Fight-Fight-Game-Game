@@ -1,8 +1,15 @@
-[gd_scene load_steps=6 format=3 uid="uid://b8q9yp71s44j5"]
+[gd_scene format=3 uid="uid://b8rayp71s44j5"]
 
-[ext_resource type="Script" path="res://scripts/player_controller.gd" id="1"]
+[ext_resource type="Script" uid="uid://bgb2xuovai8kr" path="res://scripts/player_controller.gd" id="1"]
 [ext_resource type="Resource" path="res://characters/default_fighter.tres" id="2"]
-[ext_resource type="Script" path="res://scripts/characters/default_move_executor.gd" id="3"]
+[ext_resource type="Script" uid="uid://dgeh3ocubsunv" path="res://scripts/characters/default_move_executor.gd" id="3"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_1"]
+bg_color = Color(0.96, 0.96, 0.96, 0.95)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_1"]
 size = Vector2(64, 64)
@@ -10,43 +17,56 @@ size = Vector2(64, 64)
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_2"]
 size = Vector2(100, 64)
 
-[node name="Player" type="CharacterBody2D"]
+[node name="Player" type="CharacterBody2D" unique_id=1187024791]
 script = ExtResource("1")
 character_profile = ExtResource("2")
 
-[node name="MoveExecutor" type="Node" parent="."]
+[node name="MoveExecutor" type="Node" parent="." unique_id=527890312]
 script = ExtResource("3")
 
-[node name="Sprite" type="ColorRect" parent="."]
+[node name="Sprite" type="ColorRect" parent="." unique_id=1812258198]
 offset_left = -32.0
 offset_top = -64.0
 offset_right = 32.0
-offset_bottom = 0.0
 pivot_offset = Vector2(32, 32)
 color = Color(0.2, 0.6, 1, 1)
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+[node name="BackCheekTop" type="Panel" parent="Sprite" unique_id=1484070937]
+layout_mode = 0
+offset_left = -6.0
+offset_top = 33.0
+offset_right = 14.0
+offset_bottom = 50.0
+theme_override_styles/panel = SubResource("StyleBoxFlat_1")
+
+[node name="BackCheekBottom" type="Panel" parent="Sprite" unique_id=2048005002]
+layout_mode = 0
+offset_left = -6.0
+offset_top = 43.0
+offset_right = 14.0
+offset_bottom = 59.0
+theme_override_styles/panel = SubResource("StyleBoxFlat_1")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=567267592]
 position = Vector2(0, -32)
 shape = SubResource("RectangleShape2D_1")
 
-[node name="AttackHitbox" type="Area2D" parent="."]
+[node name="AttackHitbox" type="Area2D" parent="." unique_id=455839650]
 monitoring = false
 
-[node name="AttackCollision" type="CollisionShape2D" parent="AttackHitbox"]
-shape = SubResource("RectangleShape2D_2")
+[node name="AttackCollision" type="CollisionShape2D" parent="AttackHitbox" unique_id=2023915823]
 position = Vector2(82, -32)
+shape = SubResource("RectangleShape2D_2")
 
-[node name="AttackDebugFill" type="ColorRect" parent="AttackHitbox"]
+[node name="AttackDebugFill" type="ColorRect" parent="AttackHitbox" unique_id=737308648]
 visible = false
 offset_left = 32.0
 offset_top = -64.0
 offset_right = 132.0
-offset_bottom = 0.0
 color = Color(1, 0, 0, 0.2)
 
-[node name="AttackDebugOutline" type="Line2D" parent="AttackHitbox"]
+[node name="AttackDebugOutline" type="Line2D" parent="AttackHitbox" unique_id=2088497322]
 visible = false
 points = PackedVector2Array(32, -64, 132, -64, 132, 0, 32, 0, 32, -64)
 width = 2.0
 default_color = Color(1, 0, 0, 1)
-

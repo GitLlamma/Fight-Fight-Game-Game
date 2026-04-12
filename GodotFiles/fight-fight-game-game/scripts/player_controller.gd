@@ -154,7 +154,8 @@ func _physics_process(delta):
 	# Handle movement with momentum and limited air turning.
 	var input_dir: int = input_intent.move_axis
 
-	if input_dir != 0 and not is_attacking:
+	# Keep aerial facing locked so back-air inputs remain accessible.
+	if input_dir != 0 and not is_attacking and is_on_floor():
 		facing_dir = input_dir
 
 	if is_on_floor():
@@ -413,7 +414,11 @@ func _resolve_directional_move_slot(directional_intent: Vector2i, is_grounded: b
 	var is_forward: bool = directional_intent.x == facing_dir
 	if is_forward:
 		return character_profile.ground_forward_move if is_grounded else character_profile.air_forward_move
-	return character_profile.ground_back_move if is_grounded else character_profile.air_back_move
+
+	# Grounded back attack is intentionally disabled.
+	if is_grounded:
+		return null
+	return character_profile.air_back_move
 
 func _is_action_just_pressed_safe(action_name: String) -> bool:
 	return InputMap.has_action(action_name) and Input.is_action_just_pressed(action_name)
@@ -448,8 +453,6 @@ func _perform_double_jump(input_dir: int):
 		jump_dir = int(signf(velocity.x))
 
 	if jump_dir != 0:
-		if not is_attacking:
-			facing_dir = jump_dir
 		var target_speed: float = float(jump_dir) * speed * double_jump_direction_speed_factor
 		var turning_around: bool = signf(velocity.x) != 0.0 and signf(velocity.x) != float(jump_dir)
 		var burst_acceleration: float = double_jump_reverse_burst_acceleration if turning_around else double_jump_burst_acceleration
@@ -491,11 +494,11 @@ func _configure_attack_hitbox_for_move(_move_data: MoveData, is_grounded: bool, 
 				else:
 					_set_attack_hitbox_rect(Vector2(116.0, 56.0), Vector2(80.0 * local_sign, -28.0))
 			else:
-				# Ground Back: shorter back strike
+				# Grounded back attack is disabled; use neutral jab coverage.
 				if use_speed_layout:
-					_set_attack_hitbox_rect(Vector2(88.0, 48.0), Vector2(56.0 * local_sign, -24.0))
+					_set_attack_hitbox_rect(Vector2(64.0, 44.0), Vector2(54.0 * facing_dir, -22.0))
 				else:
-					_set_attack_hitbox_rect(Vector2(96.0, 56.0), Vector2(62.0 * local_sign, -28.0))
+					_set_attack_hitbox_rect(Vector2(72.0, 52.0), Vector2(60.0 * facing_dir, -26.0))
 			return
 
 		# Ground Neutral: quick jab directly in front
