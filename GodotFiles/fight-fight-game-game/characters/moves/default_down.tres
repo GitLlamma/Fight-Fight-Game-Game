@@ -7,4 +7,5 @@ script = ExtResource("1")
 move_id = &"down"
 display_name = "Down Attack"
 cooldown = 0.35
+startup_frames = 6
 endlag_frames = 8

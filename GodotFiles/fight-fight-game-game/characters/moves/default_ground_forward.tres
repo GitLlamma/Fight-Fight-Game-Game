@@ -8,4 +8,5 @@ move_id = &"ground_forward"
 display_name = "Ground Forward"
 damage = 9.0
 cooldown = 0.25
+startup_frames = 5
 endlag_frames = 7

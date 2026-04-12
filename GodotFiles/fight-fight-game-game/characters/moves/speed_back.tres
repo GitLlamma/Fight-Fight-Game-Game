@@ -8,6 +8,6 @@ move_id = &"back"
 display_name = "Back Attack"
 damage = 10.0
 cooldown = 0.28
-startup_frames = 4
+startup_frames = 6
 active_frames = 3
 endlag_frames = 8

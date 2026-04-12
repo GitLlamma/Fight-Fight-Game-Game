@@ -8,6 +8,6 @@ move_id = &"neutral"
 display_name = "Neutral Attack"
 damage = 10.0
 cooldown = 0.28
-startup_frames = 4
+startup_frames = 6
 active_frames = 3
 endlag_frames = 8

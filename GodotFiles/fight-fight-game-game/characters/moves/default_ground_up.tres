@@ -8,6 +8,6 @@ move_id = &"ground_up"
 display_name = "Ground Up"
 damage = 8.0
 cooldown = 0.42
-startup_frames = 8
+startup_frames = 10
 active_frames = 10
 endlag_frames = 11

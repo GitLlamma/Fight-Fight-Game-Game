@@ -237,6 +237,7 @@ Responsibilities:
 - jump logic, double jump, and fast fall
 - double jump supports normal in-air movement steering (including reversals), while facing direction remains locked until landing
 - attack input and move resolution with grounded vs aerial differentiation
+- all moves now have explicit startup commitment to avoid frame-1 pressure: most grounded moves start at 5 frames, most aerial moves at 6 frames, and default grounded up starts at 10 frames
 - directional grounded attacks with shorter cooldowns than aerials and directional hitbox coverage:
   - neutral grounded: quick jab directly in front (0.12s cooldown default, 0.10s speed)
   - forward/up/down grounded: directional strikes (0.25s cooldown default, 0.20s speed)
@@ -253,8 +254,8 @@ Responsibilities:
 - neutral aerial attack uses a small all-around placeholder hitbox centered on the player
 - placeholder aerial hitbox layout is tuned separately per character profile (default and speed)
 - optional temporary Label2D debug text can display each player's directional attack intent vector in real time
-- hit detection and damage
-- clash mechanic: when both fighters' active attack hitboxes collide, both attacks are canceled, both fighters get a small knockback, and neither takes damage
+- hit detection, damage, and baseline knockback on successful move hits
+- clash mechanic: when both fighters' active attack hitboxes collide, both attacks are canceled, both fighters get greatly increased knockback, and neither takes damage
 - down-aerial attacks: when a downward aerial attack connects (body hit or clash), the attacker regains their double jump, rewarding aggressive downward aerial play
 - down-air pogo: when an aerial down attack hits from above, the top attacker is also launched upward strongly (no extra damage added)
 - down-vs-up clash boost: if a top fighter's down attack clashes with a bottom fighter's up attack, the top fighter is launched even more strongly than the standard pogo

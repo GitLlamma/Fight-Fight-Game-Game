@@ -8,6 +8,6 @@ move_id = &"ground_neutral"
 display_name = "Ground Neutral"
 damage = 7.0
 cooldown = 0.12
-startup_frames = 3
+startup_frames = 5
 active_frames = 2
 endlag_frames = 4

@@ -7,4 +7,5 @@ script = ExtResource("1")
 move_id = &"forward"
 display_name = "Forward Attack"
 cooldown = 0.35
+startup_frames = 6
 endlag_frames = 8

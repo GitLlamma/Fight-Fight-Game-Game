@@ -20,8 +20,10 @@ const DEFAULT_CHARACTER_ID := "default_fighter"
 const SPEED_CHARACTER_ID := "speed_fighter"
 const INPUT_MODE_KEYBOARD: StringName = &"keyboard"
 const INPUT_MODE_CONTROLLER: StringName = &"controller"
-const CLASH_KNOCKBACK_X := 240.0
-const CLASH_KNOCKBACK_Y := -120.0
+const HIT_KNOCKBACK_X := 180.0
+const HIT_KNOCKBACK_Y := -110.0
+const CLASH_KNOCKBACK_X := 520.0
+const CLASH_KNOCKBACK_Y := -280.0
 const DOWN_AERIAL_POGO_LAUNCH_Y := -600.0
 const CLASH_DOWN_UP_POGO_LAUNCH_Y := -1000.0
 const SPEED_DOWN_AERIAL_DIVE_SPEED := 1700.0
@@ -702,9 +704,28 @@ func _on_attack_hitbox_entered(body):
 		if _try_resolve_clash_with_player(body):
 			return
 		_try_apply_down_air_pogo(body)
+		_apply_hit_knockback(body)
 		var applied_damage: float = current_move_damage if current_move_damage > 0.0 else attack_damage
 		body.take_damage(applied_damage)
 		print("Player %d hit Player %d for %.1f damage!" % [player_number, body.player_number, applied_damage])
+
+func _apply_hit_knockback(hit_player: Player) -> void:
+	if hit_player == null:
+		return
+
+	var away_from_attacker: float = signf(hit_player.global_position.x - global_position.x)
+	if away_from_attacker == 0.0:
+		away_from_attacker = float(facing_dir)
+
+	hit_player.velocity.x = away_from_attacker * HIT_KNOCKBACK_X
+
+	var vertical_knockback: float = HIT_KNOCKBACK_Y
+	if current_attack_vertical_intent < 0:
+		vertical_knockback = HIT_KNOCKBACK_Y - 35.0
+	elif current_attack_vertical_intent > 0:
+		vertical_knockback = HIT_KNOCKBACK_Y + 30.0
+
+	hit_player.velocity.y = min(hit_player.velocity.y, vertical_knockback)
 
 func _try_apply_down_air_pogo(hit_player: Player) -> void:
 	if hit_player == null or hit_player == self:
