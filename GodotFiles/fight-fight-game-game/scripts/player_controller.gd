@@ -66,8 +66,13 @@ var health: float
 var is_attacking = false
 var attack_timer = 0.0
 var current_move_damage = 0.0
+var current_move_id: StringName = &""
+var current_attack_is_grounded := false
+var current_move_active_time := 0.0
 var current_attack_is_down_aerial := false
 var current_attack_vertical_intent := 0
+var current_move_active_elapsed := 0.0
+var default_ground_up_sweep_active := false
 var player_number = 1
 var facing_dir = 1
 var input_mode: StringName = INPUT_MODE_KEYBOARD
@@ -244,11 +249,18 @@ func _physics_process(delta):
 		move_requested.emit(player_number, move_data.move_id, is_grounded_attack, input_intent.directional_intent)
 		_configure_attack_hitbox_for_move(move_data, is_grounded_attack, input_intent.directional_intent)
 		current_move_damage = move_data.damage
+		current_move_id = move_data.move_id
+		current_attack_is_grounded = is_grounded_attack
+		current_move_active_time = float(max(move_data.active_frames, 1)) / 60.0
+		current_move_active_elapsed = 0.0
+		default_ground_up_sweep_active = false
 		current_attack_is_down_aerial = not is_grounded_attack and input_intent.directional_intent.y > 0
 		current_attack_vertical_intent = input_intent.directional_intent.y
 		move_executor.execute_move(self, move_data)
 		attack_timer = move_data.cooldown
 	
+	_update_active_attack_hitbox_motion(delta)
+
 	attack_timer = max(attack_timer - delta, 0.0)
 	
 	# Flip sprite based on one shared facing convention.
@@ -571,6 +583,31 @@ func _update_attack_debug_geometry(size: Vector2, center: Vector2) -> void:
 			Vector2(left, top),
 		])
 
+func _update_active_attack_hitbox_motion(delta: float) -> void:
+	if not default_ground_up_sweep_active:
+		return
+	if attack_hitbox == null or not attack_hitbox.monitoring:
+		return
+
+	current_move_active_elapsed += delta
+	_apply_default_ground_up_sweep_hitbox()
+
+func _apply_default_ground_up_sweep_hitbox() -> void:
+	var active_time: float = max(current_move_active_time, 0.001)
+	var t: float = clampf(current_move_active_elapsed / active_time, 0.0, 1.0)
+
+	# Sweep from front-up to back-up over a 180-degree arc during active frames.
+	var start_angle: float = deg_to_rad(-35.0)
+	var end_angle: float = deg_to_rad(-145.0)
+	var angle: float = lerpf(start_angle, end_angle, t)
+
+	var arc_radius: float = 76.0
+	var arc_origin := Vector2(0.0, -24.0)
+	var arc_pos := Vector2(cos(angle) * arc_radius, sin(angle) * arc_radius)
+	arc_pos.x *= float(facing_dir)
+
+	_set_attack_hitbox_rect(Vector2(64.0, 64.0), arc_origin + arc_pos)
+
 func begin_attack_state():
 	is_attacking = true
 	update_animation("attack")
@@ -578,14 +615,34 @@ func begin_attack_state():
 func set_attack_hitbox_enabled(enabled: bool):
 	if attack_hitbox:
 		attack_hitbox.monitoring = enabled
+
+	if enabled and _is_default_ground_up_sweep_active():
+		default_ground_up_sweep_active = true
+		current_move_active_elapsed = 0.0
+		_apply_default_ground_up_sweep_hitbox()
+	elif not enabled:
+		default_ground_up_sweep_active = false
+
 	if attack_debug_fill:
 		attack_debug_fill.visible = enabled
 	if attack_debug_outline:
 		attack_debug_outline.visible = enabled
 
+func _is_default_ground_up_sweep_active() -> bool:
+	if character_profile == null:
+		return false
+	if String(character_profile.character_id) != DEFAULT_CHARACTER_ID:
+		return false
+	return current_attack_is_grounded and current_move_id == &"ground_up"
+
 func end_attack_state():
 	is_attacking = false
 	current_move_damage = 0.0
+	current_move_id = &""
+	current_attack_is_grounded = false
+	current_move_active_time = 0.0
+	current_move_active_elapsed = 0.0
+	default_ground_up_sweep_active = false
 	current_attack_is_down_aerial = false
 	current_attack_vertical_intent = 0
 	set_attack_hitbox_enabled(false)

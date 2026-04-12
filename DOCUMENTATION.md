@@ -240,6 +240,7 @@ Responsibilities:
 - directional grounded attacks with shorter cooldowns than aerials and directional hitbox coverage:
   - neutral grounded: quick jab directly in front (0.12s cooldown default, 0.10s speed)
   - forward/up/down grounded: directional strikes (0.25s cooldown default, 0.20s speed)
+  - default fighter grounded up is a heavier sweep: slower startup/cooldown and a moving hitbox that sweeps 180 degrees from front-up to back-up during active frames
   - grounded back attack is disabled; back+attack on ground falls back to neutral grounded attack
   - grounded endlag reduced for snappy feel (4-7 frames default, 3-5 frames speed)
 - directional aerial attacks with shorter endlag than before:
