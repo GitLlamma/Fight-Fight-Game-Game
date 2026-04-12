@@ -20,6 +20,10 @@ const DEFAULT_CHARACTER_ID := "default_fighter"
 const SPEED_CHARACTER_ID := "speed_fighter"
 const INPUT_MODE_KEYBOARD: StringName = &"keyboard"
 const INPUT_MODE_CONTROLLER: StringName = &"controller"
+const CLASH_KNOCKBACK_X := 240.0
+const CLASH_KNOCKBACK_Y := -120.0
+const DOWN_AERIAL_POGO_LAUNCH_Y := -600.0
+const CLASH_DOWN_UP_POGO_LAUNCH_Y := -1000.0
 
 @export var character_profile: CharacterData
 
@@ -62,6 +66,8 @@ var health: float
 var is_attacking = false
 var attack_timer = 0.0
 var current_move_damage = 0.0
+var current_attack_is_down_aerial := false
+var current_attack_vertical_intent := 0
 var player_number = 1
 var facing_dir = 1
 var input_mode: StringName = INPUT_MODE_KEYBOARD
@@ -95,6 +101,7 @@ func _ready():
 	health = max_health
 	if attack_hitbox:
 		attack_hitbox.body_entered.connect(_on_attack_hitbox_entered)
+		attack_hitbox.area_entered.connect(_on_attack_hitbox_area_entered)
 	if attack_debug_fill:
 		attack_debug_fill.hide()
 	if attack_debug_outline:
@@ -231,10 +238,13 @@ func _physics_process(delta):
 	
 	# Handle attack
 	if input_intent.attack_pressed and attack_timer <= 0.0 and not is_attacking:
+		var is_grounded_attack: bool = is_on_floor()
 		var move_data: MoveData = _resolve_move_data(input_intent)
-		move_requested.emit(player_number, move_data.move_id, is_on_floor(), input_intent.directional_intent)
-		_configure_attack_hitbox_for_move(move_data, is_on_floor(), input_intent.directional_intent)
+		move_requested.emit(player_number, move_data.move_id, is_grounded_attack, input_intent.directional_intent)
+		_configure_attack_hitbox_for_move(move_data, is_grounded_attack, input_intent.directional_intent)
 		current_move_damage = move_data.damage
+		current_attack_is_down_aerial = not is_grounded_attack and input_intent.directional_intent.y > 0
+		current_attack_vertical_intent = input_intent.directional_intent.y
 		move_executor.execute_move(self, move_data)
 		attack_timer = move_data.cooldown
 	
@@ -533,6 +543,8 @@ func set_attack_hitbox_enabled(enabled: bool):
 func end_attack_state():
 	is_attacking = false
 	current_move_damage = 0.0
+	current_attack_is_down_aerial = false
+	current_attack_vertical_intent = 0
 	set_attack_hitbox_enabled(false)
 	if sprite:
 		sprite.scale.y = 1.0
@@ -567,9 +579,95 @@ func _apply_animation_visuals(anim_name: String):
 
 func _on_attack_hitbox_entered(body):
 	if body is Player and body != self:
+		if _try_resolve_clash_with_player(body):
+			return
+		_try_apply_down_air_pogo(body)
 		var applied_damage: float = current_move_damage if current_move_damage > 0.0 else attack_damage
 		body.take_damage(applied_damage)
 		print("Player %d hit Player %d for %.1f damage!" % [player_number, body.player_number, applied_damage])
+
+func _try_apply_down_air_pogo(hit_player: Player) -> void:
+	if hit_player == null or hit_player == self:
+		return
+	if not current_attack_is_down_aerial:
+		return
+
+	# Reward: downward aerial hit restores double jump.
+	jump_count = 0
+
+	# Pogo trigger: attacker is above the target at hit time.
+	if global_position.y >= hit_player.global_position.y:
+		return
+
+	is_fast_falling = false
+	velocity.y = min(velocity.y, DOWN_AERIAL_POGO_LAUNCH_Y)
+
+func _on_attack_hitbox_area_entered(area: Area2D) -> void:
+	if area == null:
+		return
+
+	var other_player: Player = _get_player_from_attack_area(area)
+	if other_player == null or other_player == self:
+		return
+
+	_try_resolve_clash_with_player(other_player)
+
+func _get_player_from_attack_area(area: Area2D) -> Player:
+	if area == null or area.name != "AttackHitbox":
+		return null
+
+	var area_owner: Node = area.get_parent()
+	if area_owner is Player:
+		return area_owner as Player
+	return null
+
+func _try_resolve_clash_with_player(other_player: Player) -> bool:
+	if other_player == null or other_player == self:
+		return false
+	if not is_attacking or not attack_hitbox or not attack_hitbox.monitoring:
+		return false
+	if not other_player.is_attacking:
+		return false
+	if not other_player.attack_hitbox or not other_player.attack_hitbox.monitoring:
+		return false
+
+	_try_apply_down_vs_up_clash_pogo(other_player)
+	
+	# Reward: any downward aerial attack during a clash restores double jump.
+	if current_attack_is_down_aerial:
+		jump_count = 0
+	if other_player.current_attack_is_down_aerial:
+		other_player.jump_count = 0
+	
+	_apply_clash_knockback(other_player)
+	other_player._apply_clash_knockback(self)
+	end_attack_state()
+	other_player.end_attack_state()
+	return true
+
+func _try_apply_down_vs_up_clash_pogo(other_player: Player) -> void:
+	if other_player == null:
+		return
+
+	var self_is_top: bool = global_position.y < other_player.global_position.y
+	var top_player: Player = self if self_is_top else other_player
+	var bottom_player: Player = other_player if self_is_top else self
+
+	# Special clash outcome: top fighter using down attack clashes with bottom fighter using up attack.
+	if top_player.current_attack_vertical_intent > 0 and bottom_player.current_attack_vertical_intent < 0:
+		top_player.is_fast_falling = false
+		top_player.velocity.y = min(top_player.velocity.y, CLASH_DOWN_UP_POGO_LAUNCH_Y)
+
+func _apply_clash_knockback(other_player: Player) -> void:
+	if other_player == null:
+		return
+
+	var away_from_other: float = signf(global_position.x - other_player.global_position.x)
+	if away_from_other == 0.0:
+		away_from_other = float(facing_dir)
+
+	velocity.x = away_from_other * CLASH_KNOCKBACK_X
+	velocity.y = min(velocity.y, CLASH_KNOCKBACK_Y)
 
 func take_damage(damage: float):
 	health -= damage

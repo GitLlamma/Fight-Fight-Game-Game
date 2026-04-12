@@ -1,11 +1,11 @@
 [gd_resource type="Resource" script_class="CharacterData" load_steps=6 format=3]
 
 [ext_resource type="Script" path="res://scripts/characters/character_data.gd" id="1"]
-[ext_resource type="Resource" path="res://characters/moves/default_neutral.tres" id="2"]
-[ext_resource type="Resource" path="res://characters/moves/default_up.tres" id="3"]
-[ext_resource type="Resource" path="res://characters/moves/default_down.tres" id="4"]
-[ext_resource type="Resource" path="res://characters/moves/default_forward.tres" id="5"]
-[ext_resource type="Resource" path="res://characters/moves/default_back.tres" id="6"]
+[ext_resource type="Resource" path="res://characters/moves/speed_neutral.tres" id="2"]
+[ext_resource type="Resource" path="res://characters/moves/speed_up.tres" id="3"]
+[ext_resource type="Resource" path="res://characters/moves/speed_down.tres" id="4"]
+[ext_resource type="Resource" path="res://characters/moves/speed_forward.tres" id="5"]
+[ext_resource type="Resource" path="res://characters/moves/speed_back.tres" id="6"]
 
 [resource]
 script = ExtResource("1")

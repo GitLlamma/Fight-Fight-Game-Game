@@ -241,6 +241,10 @@ Responsibilities:
 - placeholder aerial hitbox layout is tuned separately per character profile (default and speed)
 - optional temporary Label2D debug text can display each player's directional attack intent vector in real time
 - hit detection and damage
+- clash mechanic: when both fighters' active attack hitboxes collide, both attacks are canceled, both fighters get a small knockback, and neither takes damage
+- down-aerial attacks: when a downward aerial attack connects (body hit or clash), the attacker regains their double jump, rewarding aggressive downward aerial play
+- down-air pogo: when an aerial down attack hits from above, the top attacker is also launched upward strongly (no extra damage added)
+- down-vs-up clash boost: if a top fighter's down attack clashes with a bottom fighter's up attack, the top fighter is launched even more strongly than the standard pogo
 - animation state and visual feedback
 - prevents inherited platform-velocity boosts when fighters stack on top of each other
 
@@ -290,7 +294,12 @@ characters/
     ├── default_down.tres
     ├── default_forward.tres
     ├── default_neutral.tres
-    └── default_up.tres
+    ├── default_up.tres
+    ├── speed_back.tres
+    ├── speed_down.tres
+    ├── speed_forward.tres
+    ├── speed_neutral.tres
+    └── speed_up.tres
 ```
 
 #### characters/default_fighter.tres
@@ -298,6 +307,7 @@ Base fighter profile with standard movement and combat values.
 
 #### characters/speed_fighter.tres
 Alternative fighter profile with faster movement and lower max health.
+Uses its own move resources (`speed_*`) so cooldown/damage/frame data can be tuned independently from the default fighter.
 
 #### characters/moves/
 Stores MoveData resources used by directional attacks.
