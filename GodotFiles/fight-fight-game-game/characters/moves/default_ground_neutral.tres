@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="MoveData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/characters/move_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+move_id = &"ground_neutral"
+display_name = "Ground Neutral"
+damage = 7.0
+cooldown = 0.2
+startup_frames = 3
+active_frames = 2
+endlag_frames = 6

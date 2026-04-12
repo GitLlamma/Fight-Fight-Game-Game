@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="CharacterData" load_steps=6 format=3]
+[gd_resource type="Resource" script_class="CharacterData" load_steps=16 format=3]
 
 [ext_resource type="Script" path="res://scripts/characters/character_data.gd" id="1"]
 [ext_resource type="Resource" path="res://characters/moves/default_neutral.tres" id="2"]
@@ -6,6 +6,11 @@
 [ext_resource type="Resource" path="res://characters/moves/default_down.tres" id="4"]
 [ext_resource type="Resource" path="res://characters/moves/default_forward.tres" id="5"]
 [ext_resource type="Resource" path="res://characters/moves/default_back.tres" id="6"]
+[ext_resource type="Resource" path="res://characters/moves/default_ground_neutral.tres" id="7"]
+[ext_resource type="Resource" path="res://characters/moves/default_ground_up.tres" id="8"]
+[ext_resource type="Resource" path="res://characters/moves/default_ground_down.tres" id="9"]
+[ext_resource type="Resource" path="res://characters/moves/default_ground_forward.tres" id="10"]
+[ext_resource type="Resource" path="res://characters/moves/default_ground_back.tres" id="11"]
 
 [resource]
 script = ExtResource("1")
@@ -43,11 +48,11 @@ short_hop_velocity_multiplier = 0.62
 attack_damage = 10.0
 attack_cooldown = 0.5
 damage_flash_duration = 0.12
-ground_neutral_move = ExtResource("2")
-ground_up_move = ExtResource("3")
-ground_down_move = ExtResource("4")
-ground_forward_move = ExtResource("5")
-ground_back_move = ExtResource("6")
+ground_neutral_move = ExtResource("7")
+ground_up_move = ExtResource("8")
+ground_down_move = ExtResource("9")
+ground_forward_move = ExtResource("10")
+ground_back_move = ExtResource("11")
 air_neutral_move = ExtResource("2")
 air_up_move = ExtResource("3")
 air_down_move = ExtResource("4")

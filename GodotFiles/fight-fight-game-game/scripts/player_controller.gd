@@ -459,13 +459,53 @@ func _configure_attack_hitbox_for_move(_move_data: MoveData, is_grounded: bool, 
 	if attack_collision == null:
 		return
 
-	if is_grounded:
-		_set_attack_hitbox_rect(Vector2(100.0, 64.0), Vector2(82.0 * facing_dir, -32.0))
-		return
-
 	var character_id: String = String(character_profile.character_id) if character_profile else DEFAULT_CHARACTER_ID
 	var use_speed_layout: bool = character_id == SPEED_CHARACTER_ID
 
+	if is_grounded:
+		# Vertical intent has priority for grounded attacks too.
+		if directional_intent.y < 0:
+			# Ground Up: tall rect above the player, centered horizontally
+			if use_speed_layout:
+				_set_attack_hitbox_rect(Vector2(48.0, 80.0), Vector2(0.0, -90.0))
+			else:
+				_set_attack_hitbox_rect(Vector2(56.0, 92.0), Vector2(0.0, -104.0))
+			return
+
+		if directional_intent.y > 0:
+			# Ground Down: horizontal low strike
+			if use_speed_layout:
+				_set_attack_hitbox_rect(Vector2(80.0, 36.0), Vector2(0.0, 28.0))
+			else:
+				_set_attack_hitbox_rect(Vector2(88.0, 40.0), Vector2(0.0, 32.0))
+			return
+
+		if directional_intent.x != 0:
+			var forward_sign: float = 1.0 if directional_intent.x == facing_dir else -1.0
+			var local_sign: float = forward_sign * float(facing_dir)
+			
+			if forward_sign > 0.0:
+				# Ground Forward: extended range strike
+				if use_speed_layout:
+					_set_attack_hitbox_rect(Vector2(104.0, 48.0), Vector2(72.0 * local_sign, -24.0))
+				else:
+					_set_attack_hitbox_rect(Vector2(116.0, 56.0), Vector2(80.0 * local_sign, -28.0))
+			else:
+				# Ground Back: shorter back strike
+				if use_speed_layout:
+					_set_attack_hitbox_rect(Vector2(88.0, 48.0), Vector2(56.0 * local_sign, -24.0))
+				else:
+					_set_attack_hitbox_rect(Vector2(96.0, 56.0), Vector2(62.0 * local_sign, -28.0))
+			return
+
+		# Ground Neutral: quick jab directly in front
+		if use_speed_layout:
+			_set_attack_hitbox_rect(Vector2(64.0, 44.0), Vector2(54.0 * facing_dir, -22.0))
+		else:
+			_set_attack_hitbox_rect(Vector2(72.0, 52.0), Vector2(60.0 * facing_dir, -26.0))
+		return
+
+	# Aerial attacks below:
 	# Use captured directional input for placeholder aerial hitbox direction.
 	if directional_intent.y < 0:
 		if use_speed_layout:

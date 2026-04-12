@@ -233,7 +233,14 @@ Responsibilities:
 - supports controller-driven movement directions when controller mode is selected
 - supports controller-driven jump and attack with default button mappings when controller mode is selected
 - jump logic, double jump, and fast fall
-- attack input and move resolution
+- attack input and move resolution with grounded vs aerial differentiation
+- directional grounded attacks with shorter cooldowns than aerials and directional hitbox coverage:
+  - neutral grounded: quick jab directly in front (64×44 px default, 54×40 px speed)
+  - forward grounded: extended reaching strike (116×56 px default, 104×48 px speed)
+  - up grounded: tall upward arc hitting above (56×92 px default, 48×80 px speed)
+  - down grounded: low horizontal strike (88×40 px default, 80×36 px speed)
+  - back grounded: shorter backward strike (96×56 px default, 88×48 px speed)
+- grounded hitbox placement respects character-specific optimizations for default vs speed fighters
 - directional aerial attacks with placeholder hitboxes for up/down/forward/back input
 - directional aerial attack intent is vertical-first when horizontal and vertical are both held
 - directional intent uses each player's dedicated mapped actions (no shared fallback actions)
@@ -293,11 +300,21 @@ characters/
     ├── default_back.tres
     ├── default_down.tres
     ├── default_forward.tres
+    ├── default_ground_back.tres
+    ├── default_ground_down.tres
+    ├── default_ground_forward.tres
+    ├── default_ground_neutral.tres
+    ├── default_ground_up.tres
     ├── default_neutral.tres
     ├── default_up.tres
     ├── speed_back.tres
     ├── speed_down.tres
     ├── speed_forward.tres
+    ├── speed_ground_back.tres
+    ├── speed_ground_down.tres
+    ├── speed_ground_forward.tres
+    ├── speed_ground_neutral.tres
+    ├── speed_ground_up.tres
     ├── speed_neutral.tres
     └── speed_up.tres
 ```
@@ -312,7 +329,11 @@ Uses its own move resources (`speed_*`) so cooldown/damage/frame data can be tun
 #### characters/moves/
 Stores MoveData resources used by directional attacks.
 
-These resources define things like:
+Attack types:
+- **Grounded moves** (`*_ground_*.tres`): Directional attacks performed while on the ground. These have shorter cooldowns and faster startup to enable ground-based combo and pressure gameplay. Each character has separate grounded move files for independent tuning.
+- **Aerial moves** (`*.tres` without `ground_` prefix): Directional attacks performed in the air. These typically have longer cooldowns and endlag.
+
+Each move resource defines:
 - move ID
 - display name
 - damage
@@ -320,6 +341,8 @@ These resources define things like:
 - startup frames
 - active frames
 - endlag frames
+
+Example: `default_fighter` uses `default_ground_neutral.tres` for grounded neutral attacks and `default_neutral.tres` for aerial neutral attacks, allowing independent tuning of ground vs air gameplay feel.
 
 ## Character Script Subfolder
 
