@@ -24,6 +24,7 @@ const CLASH_KNOCKBACK_X := 240.0
 const CLASH_KNOCKBACK_Y := -120.0
 const DOWN_AERIAL_POGO_LAUNCH_Y := -600.0
 const CLASH_DOWN_UP_POGO_LAUNCH_Y := -1000.0
+const SPEED_DOWN_AERIAL_DIVE_SPEED := 1700.0
 
 @export var character_profile: CharacterData
 
@@ -256,6 +257,7 @@ func _physics_process(delta):
 		default_ground_up_sweep_active = false
 		current_attack_is_down_aerial = not is_grounded_attack and input_intent.directional_intent.y > 0
 		current_attack_vertical_intent = input_intent.directional_intent.y
+		_try_apply_speed_down_aerial_dive(move_data)
 		move_executor.execute_move(self, move_data)
 		attack_timer = move_data.cooldown
 	
@@ -531,7 +533,8 @@ func _configure_attack_hitbox_for_move(_move_data: MoveData, is_grounded: bool, 
 
 	if directional_intent.y > 0:
 		if use_speed_layout:
-			_set_attack_hitbox_rect(Vector2(62.0, 52.0), Vector2(0.0, 30.0))
+			# Speed Fighter down-air: compact spike hitbox directly beneath the body.
+			_set_attack_hitbox_rect(Vector2(40.0, 26.0), Vector2(0.0, 44.0))
 		else:
 			_set_attack_hitbox_rect(Vector2(70.0, 56.0), Vector2(0.0, 26.0))
 		return
@@ -634,6 +637,23 @@ func _is_default_ground_up_sweep_active() -> bool:
 	if String(character_profile.character_id) != DEFAULT_CHARACTER_ID:
 		return false
 	return current_attack_is_grounded and current_move_id == &"ground_up"
+
+func _try_apply_speed_down_aerial_dive(move_data: MoveData) -> void:
+	if move_data == null:
+		return
+	if character_profile == null:
+		return
+	if String(character_profile.character_id) != SPEED_CHARACTER_ID:
+		return
+	if current_attack_is_grounded:
+		return
+	if move_data.move_id != &"down":
+		return
+
+	# Launch downward immediately when speed fighter performs down-air.
+	is_fast_falling = true
+	jump_hold_timer = 0.0
+	velocity.y = max(velocity.y, SPEED_DOWN_AERIAL_DIVE_SPEED)
 
 func end_attack_state():
 	is_attacking = false

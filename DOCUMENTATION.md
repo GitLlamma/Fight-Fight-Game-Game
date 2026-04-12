@@ -246,6 +246,7 @@ Responsibilities:
 - directional aerial attacks with shorter endlag than before:
   - all aerial attacks: 0.35s cooldown default, 0.28s speed (down from 0.5s/0.42s)
   - endlag reduced to 8 frames for all aerials (down from 12)
+- speed fighter down-air is a dive attack: it applies immediate downward velocity and uses a compact hitbox directly beneath the fighter with an extended active window
 - directional aerial attacks with placeholder hitboxes for up/down/forward/back input
 - directional aerial attack intent is vertical-first when horizontal and vertical are both held
 - directional intent uses each player's dedicated mapped actions (no shared fallback actions)

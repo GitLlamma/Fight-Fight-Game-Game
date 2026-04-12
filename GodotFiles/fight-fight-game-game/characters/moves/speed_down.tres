@@ -9,5 +9,5 @@ display_name = "Down Attack"
 damage = 10.0
 cooldown = 0.28
 startup_frames = 4
-active_frames = 3
+active_frames = 6
 endlag_frames = 8
